@@ -1,6 +1,12 @@
+/*
+* App
+*/
 .app {
   display: flex;
+  width: 100vw;
+  height: 100vh;
 }
+
 /*
 * Search Bar
 */
@@ -20,11 +26,11 @@
 }
 
 /*
-* MAP
+* Map
 */
 .mapContainer {
-  width: calc(100vw - 400px);
-  height: 100vh;
+  width: calc(100% - 400px);
+  height: 100%;
   padding: 10px;
   position: relative;
 }
@@ -37,17 +43,13 @@
   z-index: -1;
 }
 
-
-
 /*
 * Side bar
 */
 .sidebar {
   margin: 5px;
   padding: 20px;
-  border-radius: 3px;
-  border: solid 1px lightgrey;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
   width: 390px;
   height: calc(100vh - 10px);
+  margin-left: 0;
 }
