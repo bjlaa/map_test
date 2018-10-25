@@ -17,174 +17,161 @@
     <link href='https://api.mapbox.com/mapbox-gl-js/v0.50.0/mapbox-gl.css' rel='stylesheet' />
   </head>
 
-  <body onload='getLocation()'>
-<!-- Mise en page bootstrap via flexbox, deux colonnes. 
-la première faisant 9 et la seconde 3 pour arriver à 12 -->
-<!--div id="conteneur" class="container">
-     <h1>WIGOT - <i>What is going on tonight ?</i></h1-->
-     
-<!-- Première colonne -->
-     
-    <!--div class="col-lg-9">
-        <h4>Put your Pin Yo' !</h4>
-        <img class="img-responsive" src="https://planmetro.paris/wp-content/uploads/2015/10/paris-map.jpg">
-        <div id="input" class="row">
-            <input type="text" class="form-control" v-model="inputPin" ref="modif" placeholder="Entre un Pin">
-            <button type="button" class="btn btn-primary" @click="ajouter()">Ajouter</button>
-        </div>
-    </div-->
-
-<!-- Deuxième colonne, séparée en deux lignes -->
-     
-    <!---div class="col-lg-3">
-        <div class="row">
-            <div class="card">
-                <h3 class="card-header">Meilleur Pin</h3>
-                <div class="card-body">
-                    <p>Le pin #1 est...</p>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Pins ajoutés :</h4>
-                </div>
-                <div class="card-body">
-                    <table>
-                        <tbody>
-                        <tr v-for="(pin, index) in pins">
-                            <td>{{ pin.nom }}</td>
-                            <td>{{ pin.score }}</td>
-                            <td><button type="button">Like</button>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div-->
-<div id='conteneur' class='app'>
-  <main class="mapContainer">
-    <!--h4>Put your Pin Yo' !</h4-->
-    <div class="searchBar">
-      <input type="text" class="searchInput form-control" v-model="inputPin" ref="modif" placeholder="Entre un Pin">
-      <button type="button" class="searchButton btn btn-primary" @click="ajouter()">Ajouter</button>
-    </div>
-    <div id="map" class="map"></div>
-  </main>
-  <aside class="sidebar">
-    <div>
-      <div class="card">
-        <h3 class="card-header">Meilleur Pin</h3>
-        <div class="card-body">
-          <p>Le pin #1 est...</p>
+  <body>
+    <div id='container'>
+      <div ref="modal" class="modalContainer" id="modal">
+        <div class="background"></div>
+        <div class="modalWigot">
+          <h2>Welcome on Wigot!</h2>
+          <h4>Create an event to begin:</h4>
+          <h5 class="modalTitle">Name your event:</h5>
+          <input class="searchInput form-control" type="text">
+          <h5 class="guestList">Invite your friends/family members:</h5>
+          <input class="searchInput form-control" type="text">
+          <button class="btn btn-primary" @click="createEvent()">Create event</button>
+          <button class="btn btn-primary" @click="toggleModal()">Close modal</button>
         </div>
       </div>
-    </div>
-    <div>
-      <div class="card">
-        <div class="card-header">
-          <h4>Pins ajoutés :</h4>
+        <div class="col-md-9">
+            <!--La carte est ici</h4-->
+            <div class="searchBar">
+                <input type="text" class="searchInput form-control" v-model="inputPin" ref="modif" placeholder="Entre un Pin">
+                <button type="button" class="searchButton btn btn-primary" @click="add()">Ajouter</button>
+            </div>
+            <i class='icon-spinner icon-spin icon-large'></i>
+            <div ref="map" id='map' class="map" style="height: 800px;" @click="ajouterPin()"></div>  
         </div>
-        <div class="card-body">
-          <table>
-            <tbody>
-            <tr v-for="(pin, index) in pins">
-              <td>{{ pin.nom }}</td>
-              <td>{{ pin.score }}</td>
-              <td><button type="button">Like</button>
-            </tr>
-            </tbody>
-          </table>
+        <div class="col-md-3">
+            <aside class="sidebar">
+                <div>
+                    <div class="card">
+                        <h3 class="card-header">Meilleur Pin</h3>
+                    <div class="card-body">
+                        <p>Le pin #1 est...</p>
+                    </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="card">
+                    <div class="card-header">
+                        <h4>Pins ajoutés :</h4>
+                    </div>
+                    <div class="card-body">
+                        <table>
+                            <tbody>
+                                <tr v-for="(pin, index) in pins">
+                                    <td>{{ pin.nom }}</td>
+                                    <td>{{ pin.score }}</td>
+                                    <td><button type="button">Like</button>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    </div>
+                </div>
+            </aside>
         </div>
-      </div>
     </div>
-  </aside>
-</div>
       
-<script src="https://unpkg.com/vue@2.0.3/dist/vue.js"></script>
+    <script src="https://unpkg.com/vue@2.0.3/dist/vue.js"></script>
  
- <script>
-  /*
-    Initiates the app
-    => Put all the code that needs to be run when the app 
-    starts here
-  */
-  function initApp(coords) {
+    <script>
 
-    /*
-      LEAFLETJS MAP
+      /*
+        VUEJS
+      */
+      var app = new window.Vue({
+        el: '#container',
+        data: {
+          eventTitle: '',
+          pins: [
+            { nom: "Le Mazet", score: 0 }
+          ],
+          map: null,
+          tileLayer: null,
+          inputPin: '',
+          localisation: '',
+          // We'll use this variable to display a discreet modal inviting
+          // the user to try and give his location again
+          isMissingLocation: false
+        },
+        mounted() {
+          this.getLocation();
+          this.toggleModal(true);
+        },
+        methods: {
+          /*
+            Get current position - called by body.onload
+          */
+          getLocation() {
+            var self = this;
+            if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(
+                // success callback: the user has accepted to give his location
+                function (position) {
+                  console.log('SUCCESS in getLocation(): position ===', position);
+                  self.initMap({ lat: position.coords.latitude, long: position.coords.longitude });
+                },
+                // error callback: the user refused to give his location
+                function () {
+                  self.initMap();
+                  self.isMissingLocation = true;
+                },
+              );
+            } else {
+              console.log('ERROR in initApp(): geolocation is not available on this browser.');
+            }
+          },
+          initMap(coords) {
+            // If we have been able to get the coordinates of the user 
+            // we center the map on his location
+            if (coords) {
+              this.map = L.map('map').setView([coords.lat, coords.long], 15);
+            } else {
+              this.map = L.map('map').setView([48.53, 2.14], 15);
+            }
+            
+            this.tileLayer = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
+            {
+            maxZoom: 19,
+            id: 'mapbox.streets',
+            accessToken: 'pk.eyJ1IjoiYmpsYWEiLCJhIjoiY2pubzRmYm1iMGI5czNycTFsYTJpZng5biJ9.hbgbuJ24OKVcx4xELavpoQ',
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
+            }).addTo(this.map);
 
-      https://leafletjs.com/examples/quick-start/
-    */
-    var map;
-    // Create the map
-    // We use the user's coordinates to center the map on his position
-    // if he accepted to give his location
-    if (coords) {
-      map = window.L.map('map').setView([coords.lat, coords.long], 13);
-    } else {
-      // Else we initialize the map with random coordinates
-      map = window.L.map('map').setView([51.505, -0.09], 13);
-    }
+            // Add the mouse click event listener
+            // Need to pass this inside a function === SCOPE ISSUE
+            // use the trick below: store this in a variable (usually "self")
+            var self = this;
+            var w = window;
+            this.map.on('click', function(e) {
+              // Get the coordinates from Leaflet
+              var latlng = self.map.mouseEventToLatLng(e.originalEvent);
+              console.log(latlng.lat + ', ' + latlng.lng);
 
-    // Add the tilelayer -- the map drawings
-    window.L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-      maxZoom: 18,
-      id: 'mapbox.streets',
-      accessToken: 'pk.eyJ1IjoiYmpsYWEiLCJhIjoiY2pubzRmYm1iMGI5czNycTFsYTJpZng5biJ9.hbgbuJ24OKVcx4xELavpoQ'
-    }).addTo(map);
+              self.addPin(latlng.lat, latlng.lng)
+            });
+          },
+          // Handles creating the event
+          createEvent() {
+            console.log('Create the event!');
+            this.toggleModal();
+          },
 
+          add: function () {
+            this.pins.push({ nom: this.inputPin, score: 0 });
+            this.inputPin = '';
+          },
 
-    /*
-      VUEJS
-    */
-    var app = new window.Vue({
-      el: '#conteneur',
-      data: {
-        pins: [
-          { nom: "Le Mazet", score: 0 }
-        ],
-        inputPin: ''
-      },
-      methods: {
-        ajouter: function () {
-          this.pins.push({ nom: this.inputPin, score: 0 });
-          this.inputPin = '';
+          addPin: function (lat, long) {
+            var newMarker = new L.marker([lat, long]).addTo(this.map);
+          },
+
+          toggleModal() {
+            this.$refs.modal.classList.toggle('showModal');
+          }
         }
-      }
-    });
-  }
-
-  // We'll use this variable to display a discreet modal inviting
-  // the user to try and give his location again
-  var isMissingLocation = false;
-  /*
-    Get current position - called by body.onload
-  */
-  function getLocation() {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        // success callback: the user has accepted to give his location
-        function (position) {
-          console.log('SUCCESS in getLocation(): position ===', position);
-          initApp({ lat: position.coords.latitude, long: position.coords.longitude });
-        },
-        // error callback: the user refused to give his location
-        function () {
-          initApp();
-          isMissingLocation = true;
-        },
-      );
-    } else {
-      console.log('ERROR in initApp(): geolocation is not available on this browser.');
-    }
-  }
-</script> 
-      
-    </body>
-
+      });
+    </script> 
+  </body>
 </html>

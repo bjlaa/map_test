@@ -48,7 +48,43 @@
 .sidebar {
   margin: 5px;
   padding: 20px;
-  width: 390px;
+  width: 100%;
   height: calc(100vh - 10px);
   margin-left: 0;
+}
+
+/*
+* Modal
+*/
+.modalContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  z-index: -100;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+.showModal {
+  z-index: 100;
+  opacity: 1;
+}
+.modalContainer .background {
+  height: 100vh;
+  width: 100vw;
+  background: rgba(0,0,0,0.4);
+}
+
+.modalWigot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 10px;
+  background: #FAFAFA;
+  width: 600px;
+  height: 400px;
+  padding: 20px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 }
