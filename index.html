@@ -116,14 +116,14 @@ la première faisant 9 et la seconde 3 pour arriver à 12 -->
 
     /*
       LEAFLETJS MAP
+
+      https://leafletjs.com/examples/quick-start/
     */
     var map;
     // Create the map
     // We use the user's coordinates to center the map on his position
     // if he accepted to give his location
-
     if (coords) {
-      console.log('coord', coords)
       map = window.L.map('map').setView([coords.lat, coords.long], 13);
     } else {
       // Else we initialize the map with random coordinates
@@ -137,6 +137,7 @@ la première faisant 9 et la seconde 3 pour arriver à 12 -->
       id: 'mapbox.streets',
       accessToken: 'pk.eyJ1IjoiYmpsYWEiLCJhIjoiY2pubzRmYm1iMGI5czNycTFsYTJpZng5biJ9.hbgbuJ24OKVcx4xELavpoQ'
     }).addTo(map);
+
 
     /*
       VUEJS
@@ -165,16 +166,15 @@ la première faisant 9 et la seconde 3 pour arriver à 12 -->
     Get current position - called by body.onload
   */
   function getLocation() {
-
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         // success callback: the user has accepted to give his location
-        function(position) {
+        function (position) {
           console.log('SUCCESS in getLocation(): position ===', position);
           initApp({ lat: position.coords.latitude, long: position.coords.longitude });
         },
         // error callback: the user refused to give his location
-        function(error) {
+        function () {
           initApp();
           isMissingLocation = true;
         },
