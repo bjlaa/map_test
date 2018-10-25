@@ -1,0 +1,53 @@
+.app {
+  display: flex;
+}
+/*
+* Search Bar
+*/
+.searchBar {
+  max-width: 100%;
+  display: flex;
+  z-index: 1;
+  margin-left: 60px;
+  margin-top: 10px;
+  margin-right: 20px;
+}
+.searchInput {
+  border-radius: 3px 0px 0px 3px!important;
+}
+.searchButton {
+  border-radius: 0px 3px 3px 0px!important;
+}
+
+/*
+* MAP
+*/
+.mapContainer {
+  width: calc(100vw - 400px);
+  height: 100vh;
+  padding: 10px;
+  position: relative;
+}
+.map {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+}
+
+
+
+/*
+* Side bar
+*/
+.sidebar {
+  margin: 5px;
+  padding: 20px;
+  border-radius: 3px;
+  border: solid 1px lightgrey;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  width: 390px;
+  height: calc(100vh - 10px);
+}
