@@ -83,8 +83,6 @@
   transform: translate(-50%, -50%);
   border-radius: 10px;
   background: #FAFAFA;
-  width: 600px;
-  height: 400px;
   padding: 20px;
   box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 }
