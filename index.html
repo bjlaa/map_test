@@ -82,7 +82,7 @@
     <script>
       var SETTINGS = {
         isAuthEnabled: false
-      }
+      };
 
       var signupComponent = `
         <div id="signupComponent" class="loginComponent">
@@ -94,7 +94,7 @@
             <button onclick="vm.showLogin()">Login in</button>
           </div>
         </div>
-      `
+      `;
       var loginComponent = `
         <div id="loginComponent" class="loginComponent">
           <h1 class="title">Welcome back on Wigot!</h1>
@@ -105,7 +105,7 @@
             <button onclick="vm.showSignup()">Sign up</button>
           </div>
         </div>
-      `
+      `;
       var createEventComponent = `
         <div class="createEvent">
           <h4>Create an event:</h4>
@@ -116,7 +116,7 @@
           <button class="btn btn-primary" @click="createEvent()">Create event</button>
           <button class="btn btn-primary" @click="toggleModal()">Close modal</button>
         </div>
-      `
+      `;
 
       /*
       * FirebaseUI config.
@@ -151,7 +151,7 @@
       var authUI = false;
 
       /*
-        VUEJS 
+      * VUEJS 
       */
       var vm = new window.Vue({
         el: '#container',
@@ -160,8 +160,8 @@
           pins: [
             { nom: "Le Mazet", score: 0 }
           ],
-          map: null,
-          tileLayer: null,
+          map: false,
+          tileLayer: false,
           inputPin: '',
           localisation: '',
           // We'll use this variable to display a discreet modal inviting
@@ -187,9 +187,11 @@
             };
             var self = this;
             firebase.initializeApp(config);
-            
+
             if (SETTINGS.isAuthEnabled) {
               this.startAuthentication();
+            } else {
+              self.getLocation();
             }
           },
 
@@ -242,11 +244,21 @@
                 // success callback: the user has accepted to give his location
                 function (position) {
                   console.log('SUCCESS in getLocation(): position ===', position);
-                  self.initMap({ lat: position.coords.latitude, long: position.coords.longitude });
+
+                  // If the map has already been initialized center it on the user's location
+                  if (self.map) {
+                    self.centerMap({ lat: position.coords.latitude, long: position.coords.longitude });
+                  // Else initialize the map
+                  } else {
+                    self.initMap({ lat: position.coords.latitude, long: position.coords.longitude });
+                  }
                 },
                 // error callback: the user refused to give his location
                 function () {
-                  self.initMap();
+                  // If the map has not already been initialized go ahead and do it
+                  if(!self.map) {
+                    self.initMap();
+                  }
                   self.isMissingLocation = true;
                 },
               );
@@ -285,7 +297,7 @@
             });
           },
           centerMap(coords) {
-            L.map('map').setView([coords.lat, coords.long], 15);
+            this.map.setView([coords.lat, coords.long], 15);
           },
           // Handles creating the event
           createEvent() {
