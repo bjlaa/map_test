@@ -113,9 +113,7 @@ var vm = new window.Vue({
     */
     currentEvent: {
       title: '',
-      pins: [
-        { nom: "Le Mazet", score: 0 }
-      ]
+      pins: []
     },
 
     isCreatingWigot: false,
@@ -247,7 +245,7 @@ var vm = new window.Vue({
         console.log('SUCCESS in main.js - fetchEvent(): doc.data() ===', eventFromDB);
 
         // We update the currentEvent object with our fetched data
-        this.currentEvent = eventFromDB;
+        self.updateEventFromDB(eventFromDB);
       })
       .catch(function(error) {
         console.log('ERROR in main.js - couldn\'t fetch event.', error);
@@ -255,6 +253,16 @@ var vm = new window.Vue({
         // so we 
         self.appState = this.appStates.wigotCreation;
       })
+    },
+
+    updateEventFromDB(event) {
+      var self = this;
+      // Update this.currentEvent
+      this.currentEvent = event;
+      // Add the pins
+      event.pins.forEach(function(pin) {
+        self.addPin(pin.coords.lat, pin.coords.long, pin);
+      });
     },
 
 
