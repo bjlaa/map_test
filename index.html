@@ -46,8 +46,13 @@
         <div class="col-md-9">
             <!--La carte est ici</h4-->
             <div class="searchBar">
-                <input type="text" class="searchInput form-control" v-model="inputPin" ref="modif" placeholder="Search for a location or a venue">
-                <button type="button" class="searchButton btn btn-primary" @click="add()">Ajouter</button>
+                <input ref='searchInput' type="text" class="searchInput form-control" v-model="inputPin" ref="modif" placeholder="Search for a location or a venue">
+                <button type="button" class="searchButton btn btn-primary" @click="searchYelpAPI($refs.searchInput.value)">Search</button>
+                <div v-if='searchResults' class="searchResults">
+                  <div class="searchResultItem" v-for='(item, index) in searchResults'>
+                    {{ item }}
+                  </div>
+                </div>
             </div>
             <i class='icon-spinner icon-spin icon-large'></i>
             <div ref="map" id='map' class="map" style="height: 800px;"></div>  

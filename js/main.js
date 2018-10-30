@@ -134,7 +134,9 @@ var vm = new window.Vue({
     db: false,
 
     // Firebase Auth UI
-    authUI: false
+    authUI: false,
+
+    searchResults: false
 
   },
 
@@ -157,6 +159,27 @@ var vm = new window.Vue({
   },
 
   methods: {
+    /*
+    * 
+    */
+    searchYelpAPI(searchTerm) {
+      fetch(`https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?term=${searchTerm}&location=paris`, {
+        method: 'GET',
+        headers: new Headers({
+          'Authorization': 'Bearer iCcyWIWqSEQEq56EGlgg_Qa1kK8R_Mpv8910GXr6Y_iKIXsLw1676ecmJDIBDX-_0lTDl9MUzJIGFoYCWzBQYRpfvgrzCb_pusHv65VwnEMRcMWom4AV-ikLvoHYW3Yx'
+        })
+      })
+      .then((response) => {
+        return response.json()
+      })
+      .then((responseParsed) => {
+        this.searchResults = Object.assign({}, responseParsed.businesses);
+        console.log('this.searchResults', this.searchResults);
+      })
+      .catch((error) => {
+        console.log('ERROR in main.js - searchYelpAPI()', error);
+      });
+    },
     /*
     * Determines whether or not to show the landing
     * or to fetch the data
