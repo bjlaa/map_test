@@ -37,10 +37,10 @@
 
   <body>
     <div id='container'>
-      <div ref="modal" class="modalContainer" id="modal">
-        <div class="background"></div>
-        <div id="modalWigot" class="modalWigot">
+      <div ref="modalContainer" class="modalContainer" id="modal">
 
+        <div ref='modalBackground' class="background"></div>
+        <div ref="modal" id="modalWigot" class="modalWigot">
         </div>
       </div>
         <div class="col-md-9">
@@ -84,6 +84,21 @@
                         </tr>
                       </tbody>
                     </table>
+                  </div>
+                  <!--
+                    Create WIGOT button renderer conditionally
+                    if appState is in wigotCreation mode
+                  -->
+                  <div v-if="appState === appStates.wigotCreation" class="createWigot">
+                    <div class="createWigotText">
+                      Everything set up? Create your Wigot to start sharing it.
+                    </div>
+                    <button
+                      @click="createEvent"
+                      class="createWigotButton"
+                    >
+                      Create Wigot
+                    </button>
                   </div>
                 </div>
               </div>

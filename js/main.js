@@ -3,7 +3,8 @@
 */
 
 var SETTINGS = {
-  isAuthEnabled: false
+  isAuthEnabled: false,
+  shareURL: 'http://localhost:3000?id='
 };
 
 /*
@@ -43,6 +44,17 @@ var createEventComponent = `
   </div>
 `;
 
+var eventCreatedComponent = function(id) {
+return `
+  <div class="eventCreated">
+    <h4>Damn! your WIGOT is created.</h4>
+    <p>Copy/paste the link below to your friend in order to blabla</p>
+    <p>${SETTINGS.shareURL}${id}</p>
+  </div>
+`  
+}
+
+
 /*
 * FirebaseUI config.
 
@@ -80,6 +92,20 @@ var uiConfig = {
 var vm = new window.Vue({
   el: '#container',
   data: {
+
+    /*
+    * The state of the app: 
+    * 1 - there is no ID passed in the URL we launch the app in creation mode
+    * 2 - there is an ID passed we hide the button create wigot as the event is
+    * already stored in our DB
+    */
+    appStates: {
+      wigotCreation: 1,
+      sharing: 2
+    },
+
+    appState: 2,
+
     /*
     * Everything relative to the event currently in progress must be stored in this 
     * object. We will save this object in our database and fetch it when a user will
@@ -89,9 +115,10 @@ var vm = new window.Vue({
       title: '',
       pins: [
         { nom: "Le Mazet", score: 0 }
-      ],
-      guests: []
+      ]
     },
+
+    isCreatingWigot: false,
 
     map: false,
 
@@ -109,17 +136,26 @@ var vm = new window.Vue({
     db: false,
 
     // Firebase Auth UI
-    authUI: false;
+    authUI: false
 
   },
 
+  /*
+  * Call this before mount
+  */
   beforeMount() {
     this.parseURL();
   },
 
   mounted() {
-    this.initMap();
     this.initFirebase();
+    this.initMap();
+
+
+    var self = this;
+    this.$refs.modalBackground.addEventListener('click', function() {
+      self.toggleModal(false);
+    });
   },
 
   methods: {
@@ -133,26 +169,15 @@ var vm = new window.Vue({
       var match = currentURL.match(/id=([^&]+)/);
 
       if (match) {
-        // Fetch the event corresponding to the id
+        // Store the ID in the state
+        this.eventID = match[1];
+      } else {
+        // If no ID is passed in the URL then we are in create mode
+        // we show the create button: the idea is not to create an entry in the database 
+        // each time a dude visits the app but only after he is sure he wants to create a wigot
+        this.appState = this.appStates.wigotCreation;
       }
     },
-
-    /*
-    * Creates an event: here we create the id but we don't save it yet on the database
-    */
-    createEvent() {
-      this.db.collection("events").add({
-        title: "My first Wigot"
-      })
-      .then(function(docRef) {
-          console.log("Document written with ID: ", docRef.id);
-      })
-      .catch(function(error) {
-          console.error("Error adding document: ", error);
-      });
-    },
-
-
 
 
     /*
@@ -180,6 +205,10 @@ var vm = new window.Vue({
       });
       this.db = db;
 
+      if (this.eventID) {
+        this.fetchEvent(this.eventID);
+      }
+
       // If we enabled authentication in the settings then we show the modal
       // with all the buttons to login or sign up
       if (SETTINGS.isAuthEnabled) {
@@ -190,13 +219,48 @@ var vm = new window.Vue({
       }
     },
 
+    /*
+    * Creates an event: here we create the id but we don't save it yet on the database
+    */
+    createEvent() {
+      // Here we add this.currentEvent to the events collection in our database
+      var self = this;
+      this.db.collection("events").add(this.currentEvent)
+      .then(function(docRef) {
+          console.log("Document written with ID: ", docRef.id);
+          self.toggleModal(true, eventCreatedComponent(docRef.id))
+      })
+      .catch(function(error) {
+          console.error("Error adding document: ", error);
+      });
+    },
 
+    /*
+    * Fetch event from the DB using the ID provided in the URL
+    */
+    fetchEvent(id) {
+      var self = this;
+      this.db.collection('events').doc(id)
+      .get()
+      .then(function(doc) {
+        var eventFromDB = doc.data();
+        console.log('SUCCESS in main.js - fetchEvent(): doc.data() ===', eventFromDB);
+
+        // We update the currentEvent object with our fetched data
+        this.currentEvent = eventFromDB;
+      })
+      .catch(function(error) {
+        console.log('ERROR in main.js - couldn\'t fetch event.', error);
+        // We couldn't retrieve the event (doesn't exist or wrong id)
+        // so we 
+        self.appState = this.appStates.wigotCreation;
+      })
+    },
 
 
     /*
     * Authentication part
     */
-    
     startAuthentication() {
       var self = this;
       firebase.auth().onAuthStateChanged(function(user) {
@@ -256,7 +320,6 @@ var vm = new window.Vue({
       // Need to pass this inside a function === SCOPE ISSUE
       // use the trick below: store this in a variable (usually "self")
       var self = this;
-      var w = window;
 
       this.map.on('click', function(e) {
         // Get the coordinates from Leaflet
@@ -332,11 +395,13 @@ var vm = new window.Vue({
     /*
     * Modal part
     */
-    toggleModal(value) {
+    toggleModal(value, component) {
       if (value) {
-        this.$refs.modal.classList.add('showModal');
+        this.$refs.modal.innerHTML = component;
+        this.$refs.modalContainer.classList.add('showModal');
       } else {
-        this.$refs.modal.classList.toggle('showModal');
+        this.$refs.modal.innerHTML = '';
+        this.$refs.modalContainer.classList.toggle('showModal');
       }
     }
   }
