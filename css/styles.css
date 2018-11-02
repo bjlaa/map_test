@@ -1,4 +1,11 @@
 /*
+* General classes
+*/
+.disabled {
+  pointer-events: none;
+}
+
+/*
 * App
 */
 .app {
@@ -21,6 +28,9 @@
 }
 .searchButton {
   border-radius: 0px 3px 3px 0px!important;
+  position: relative;
+  height: 34px;
+  min-width: 100px;
 }
 
 /*

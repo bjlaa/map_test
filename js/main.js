@@ -7,6 +7,8 @@ var SETTINGS = {
   shareURL: 'http://localhost:3000?id='
 };
 
+var markers = [];
+
 /*
 * Components that we'll render dynamically => Authentication
 */
@@ -54,6 +56,11 @@ return `
 `  
 }
 
+var loaderComponent = `
+<div class="loader">
+  <div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+</div>
+`
 
 /*
 * FirebaseUI config.
@@ -136,7 +143,8 @@ var vm = new window.Vue({
     // Firebase Auth UI
     authUI: false,
 
-    searchResults: false
+    searchResults: false,
+    isSearchResultsOpen: false
 
   },
 
@@ -163,6 +171,12 @@ var vm = new window.Vue({
     * 
     */
     searchYelpAPI(searchTerm) {
+      // On verrouille le bouton search => disabled classe utile dès que tu veux verrouiller un élément
+      var searchButton = document.getElementById('searchButton');
+      searchButton.classList.add('disabled');
+      // et on remplace le contenu du bouton par un loader le temps que la requête ait lieu
+      searchButton.innerHTML = loaderComponent;
+
       fetch(`https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?term=${searchTerm}&location=paris`, {
         method: 'GET',
         headers: new Headers({
@@ -173,8 +187,21 @@ var vm = new window.Vue({
         return response.json()
       })
       .then((responseParsed) => {
-        this.searchResults = Object.assign({}, responseParsed.businesses);
-        console.log('this.searchResults', this.searchResults);
+        // On crée une array
+        var searchResultsFiltered = [];
+
+        // Et on va boucler de 0 à 4 pour ajouter les 5 premiers éléments dans notre array
+        for (var i = 0; i <= 4; i++) {
+          searchResultsFiltered.push(Object.assign({}, responseParsed.businesses[i]));
+        }
+        
+        this.searchResults = searchResultsFiltered;
+        this.isSearchResultsOpen = true;
+
+        // On enleve la classe disabledOpacity
+        searchButton.classList.remove('disabled');
+        // et on remet notre texte
+        searchButton.innerHTML = 'Search';
       })
       .catch((error) => {
         console.log('ERROR in main.js - searchYelpAPI()', error);
@@ -355,9 +382,8 @@ var vm = new window.Vue({
       this.map.on('click', function(e) {
         // Get the coordinates from Leaflet
         var latlng = self.map.mouseEventToLatLng(e.originalEvent);
-        console.log(latlng.lat + ', ' + latlng.lng);
 
-        self.addPin(latlng.lat, latlng.lng, '');
+        self.addPin({ coordinates: { latitude: latlng.lat, longitude: latlng.lng  } });
       });
     },
 
@@ -402,21 +428,44 @@ var vm = new window.Vue({
     * Pin: all the method relative to the pins
     */
 
-    addPin: function (lat, long, data) {
+    addPin: function (data) {
+      var lat = data.coordinates.latitude.toString();
+      var long = data.coordinates.longitude.toString();
+
       var newMarker = new L.marker([lat, long]).addTo(this.map);
 
+      // On ferme la liste mais on garde les résultats
+      this.isSearchResultsOpen = false;
+
+
+      // On centre la map sur le pin
+      this.centerMap({
+        lat,
+        long
+      });
+
+      // Ici on sauvegarde une reférence vers le marker pour pouvoir le supprimer plus tard
+      markers.push(newMarker);
+
       var newPin = {
-        name: data.name ? data.name : 'Le Mazet',
-        address: data.address ? data.address : '35 rue d\Alsace',
-        comment: data.comment ? data.comment : 'Le club PED c\'est super!',
-        description: data.description ? data.description : 'Le club PED c\'est super!',
-        thumbnail: data.thumbnail ? data.thumbnail : 'URL de la thumbnail', 
+        id: newMarker._leaflet_id,
         score: 0,
         coords: {
           lat: lat,
           long: long
         }
       };
+
+      if (data && data.name) {
+        newPin.name = data.name;
+      }
+      if (data && data.location) {
+        newPin.address = data.location.address1;
+        newPin.city = data.location.city;    
+      }
+      if (data && data.image_url) {
+        newPin.image = data.location.image_url
+      }
 
       this.currentEvent.pins.push(newPin);
     },
@@ -438,7 +487,9 @@ var vm = new window.Vue({
     * Pour le moment ne supprime pas encore le pin correspondant sur la map
     */ 
     deletePin: function (index) {
+      this.map.removeLayer(markers[index]);
       this.currentEvent.pins.splice(index, 1);
+      markers.splice(index, 1);
     },
 
 
@@ -454,6 +505,13 @@ var vm = new window.Vue({
         this.$refs.modal.innerHTML = '';
         this.$refs.modalContainer.classList.toggle('showModal');
       }
+    },
+
+    /*
+    * Search
+    */
+    toggleSearchList(value) {
+      this.isSearchResultsOpen = value;
     }
   }
 });

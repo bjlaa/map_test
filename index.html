@@ -5,10 +5,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wigot</title>
-
+    <!-- Main stylesheet -->
     <link rel="stylesheet" href="./css/styles.css">
-
-    
+    <!-- Loader stylesheet -->
+    <link rel="stylesheet" href="./css/loader.css">
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -46,22 +46,43 @@
         <div class="col-md-9">
             <!--La carte est ici</h4-->
             <div class="searchBar">
-                <input ref='searchInput' type="text" class="searchInput form-control" v-model="inputPin" ref="modif" placeholder="Search for a location or a venue">
-                <button type="button" class="searchButton btn btn-primary" @click="searchYelpAPI($refs.searchInput.value)">Search</button>
+                <input
+                  ref='searchInput'
+                  type="text"
+                  class="searchInput form-control"
+                  v-model="inputPin"
+                  ref="modif"
+                  placeholder="Search for a location or a venue"
+                  @focus="toggleSearchList(true)"
+                >
+                <button
+                  type="button"
+                  class="searchButton btn btn-primary"
+                  @click="searchYelpAPI($refs.searchInput.value)"
+                  id="searchButton"
+                >Search</button>
             </div>
-            <div v-if='searchResults' class="searchResults">
+            <div v-if='isSearchResultsOpen' class="searchResults">
                 <div class="searchResultItem">
                   <ul>
-                    <li><a class="list-group-item list-group-item-action" @click="addMarker()"> {{ searchResults[0].name }} - {{ searchResults[0].location.address1 }}, {{ searchResults[0].location.zip_code }} {{ searchResults[0].location.city }} </a></li>
-                    <li><a class="list-group-item list-group-item-action" @click="addMarker()"> {{ searchResults[1].name }} - {{ searchResults[1].location.address1 }}, {{ searchResults[1].location.zip_code }} {{ searchResults[1].location.city }}</a></li>
-                    <li><a class="list-group-item list-group-item-action" @click="addMarker()"> {{ searchResults[2].name }} - {{ searchResults[2].location.address1 }}, {{ searchResults[2].location.zip_code }} {{ searchResults[2].location.city }}</a></li>
-                    <li><a class="list-group-item list-group-item-action" @click="addMarker()"> {{ searchResults[3].name }} - {{ searchResults[3].location.address1 }}, {{ searchResults[3].location.zip_code }} {{ searchResults[3].location.city }}</a></li>
-                    <li><a class="list-group-item list-group-item-action" @click="addMarker()"> {{ searchResults[4].name }} - {{ searchResults[4].location.address1 }}, {{ searchResults[4].location.zip_code }} {{ searchResults[4].location.city }}</a></li>
+                    <li v-for="item in searchResults">
+                      <a
+                        class="list-group-item list-group-item-action"
+                        @click="addPin(item)"
+                      >
+                        {{ item.name }} - {{ item.location && item.location.address1 }}, {{ item.location && item.location.zip_code }} {{ item.location && item.location.city }}
+                      </a>
+                    </li>
                   </ul>
                 </div>
             </div>
             <i class='icon-spinner icon-spin icon-large'></i>
-            <div ref="map" id='map' class="map" style="height: 800px;"></div>  
+            <div
+              ref="map"
+              id='map'
+              class="map"
+              style="height: 800px;"
+            ></div>  
         </div>
         <div class="col-md-3">
           <aside class="sidebar">
