@@ -421,6 +421,26 @@ var vm = new window.Vue({
       this.currentEvent.pins.push(newPin);
     },
 
+    addMarker: function () {
+      var newMarker = new L.marker([this.searchResults[0].coordinates.latitude, this.searchResults[0].coordinates.longitude]).addTo(this.map);
+
+      var newPin = {
+        name: this.searchResults[0].name,
+        address: this.searchResults[0].location.address1,
+      };
+
+      this.searchResults = false;
+
+      this.currentEvent.pins.push(newPin);
+    },
+
+    /* 
+    * Pour le moment ne supprime pas encore le pin correspondant sur la map
+    */ 
+    deletePin: function (index) {
+      this.currentEvent.pins.splice(index, 1);
+    },
+
 
 
     /*

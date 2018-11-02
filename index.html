@@ -48,10 +48,16 @@
             <div class="searchBar">
                 <input ref='searchInput' type="text" class="searchInput form-control" v-model="inputPin" ref="modif" placeholder="Search for a location or a venue">
                 <button type="button" class="searchButton btn btn-primary" @click="searchYelpAPI($refs.searchInput.value)">Search</button>
-                <div v-if='searchResults' class="searchResults">
-                  <div class="searchResultItem" v-for='(item, index) in searchResults'>
-                    {{ item }}
-                  </div>
+            </div>
+            <div v-if='searchResults' class="searchResults">
+                <div class="searchResultItem">
+                  <ul>
+                    <li><a class="list-group-item list-group-item-action" @click="addMarker()"> {{ searchResults[0].name }} - {{ searchResults[0].location.address1 }}, {{ searchResults[0].location.zip_code }} {{ searchResults[0].location.city }} </a></li>
+                    <li><a class="list-group-item list-group-item-action" @click="addMarker()"> {{ searchResults[1].name }} - {{ searchResults[1].location.address1 }}, {{ searchResults[1].location.zip_code }} {{ searchResults[1].location.city }}</a></li>
+                    <li><a class="list-group-item list-group-item-action" @click="addMarker()"> {{ searchResults[2].name }} - {{ searchResults[2].location.address1 }}, {{ searchResults[2].location.zip_code }} {{ searchResults[2].location.city }}</a></li>
+                    <li><a class="list-group-item list-group-item-action" @click="addMarker()"> {{ searchResults[3].name }} - {{ searchResults[3].location.address1 }}, {{ searchResults[3].location.zip_code }} {{ searchResults[3].location.city }}</a></li>
+                    <li><a class="list-group-item list-group-item-action" @click="addMarker()"> {{ searchResults[4].name }} - {{ searchResults[4].location.address1 }}, {{ searchResults[4].location.zip_code }} {{ searchResults[4].location.city }}</a></li>
+                  </ul>
                 </div>
             </div>
             <i class='icon-spinner icon-spin icon-large'></i>
@@ -66,11 +72,17 @@
               </div>
               <div class="logoBaseline">What is going on tonight?</div>
             </div>
+            <br>
+            <!-- Titre du Wigot en cours, modifiable par tout le monde (fun) -->
+            <div class="wigotTitle"><h3><strong>Titre Wigot</strong></h3></div>
+
               <div>
                 <div class="card">
                   <h3 class="card-header">Meilleur Pin</h3>
                 <div class="card-body">
-                  <p>Le pin #1 est...</p>
+                  <!-- Affichage du meilleur pin en fonction du score. La liste des pins ajoutés est ordonnées en fonction de la valeur score,
+                        la partie ci-dessous affiche donc le premier élément [0] du tableau -->
+                  <p>Le pin #1 est {{ currentEvent.pins[0] }}</p>
                 </div>
                 </div>
               </div>
@@ -83,9 +95,10 @@
                     <table>
                       <tbody>
                         <tr v-for="(pin, index) in currentEvent.pins">
-                          <td>{{ pin.nom }}</td>
-                          <td>{{ pin.score }}</td>
+                          <td>{{ pin.name }}</td>
+                          <td>{{ pin.address }}</td>
                           <td><button type="button">Like</button>
+                          <td><button type="button" class="delete" @click="deletePin(index)">Delete</button>  
                         </tr>
                       </tbody>
                     </table>
