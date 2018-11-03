@@ -5,13 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wigot</title>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
     <!-- Main stylesheet -->
     <link rel="stylesheet" href="./css/styles.css">
     <!-- Loader stylesheet -->
     <link rel="stylesheet" href="./css/loader.css">
 
-    <!-- Bootstrap -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <!-- Fontawesome -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     <!-- LeafletJs -->
@@ -46,6 +47,11 @@
         <div class="col-md-9">
             <!--La carte est ici</h4-->
             <div class="searchBar">
+              <!-- On utilise un form ici pour bénéficier du submit quand on appuie sur Entrée en plus du click sur le bouton -->
+              <form
+                class="searchBarForm"
+                v-on:submit.prevent="searchYelpAPI($refs.searchInput.value)"
+              >
                 <input
                   ref='searchInput'
                   type="text"
@@ -58,23 +64,27 @@
                 <button
                   type="button"
                   class="searchButton btn btn-primary"
-                  @click="searchYelpAPI($refs.searchInput.value)"
                   id="searchButton"
-                >Search</button>
+                  @click="searchYelpAPI($refs.searchInput.value)"
+                >Search</button>                    
+              </form>
             </div>
             <div v-if='isSearchResultsOpen' class="searchResults">
-                <div class="searchResultItem">
-                  <ul>
-                    <li v-for="item in searchResults">
-                      <a
-                        class="list-group-item list-group-item-action"
-                        @click="addPin(item)"
-                      >
-                        {{ item.name }} - {{ item.location && item.location.address1 }}, {{ item.location && item.location.zip_code }} {{ item.location && item.location.city }}
-                      </a>
-                    </li>
-                  </ul>
-                </div>
+                <ul class="searchList">
+                  <li
+                    v-for="item in searchResults"
+                    class="searchListItem list-group-item list-group-item-action"
+                    @click="addPin(item)"
+                  >
+                    <!-- pas d'utilité à mettre un lien ici
+                    a
+                      class="list-group-item list-group-item-action"
+                      @click="addPin(item)"
+                    -->
+                      {{ item.name }} - {{ item.location && item.location.address1 }}, {{ item.location && item.location.zip_code }} {{ item.location && item.location.city }}
+                    <!--/a-->
+                  </li>
+                </ul>
             </div>
             <i class='icon-spinner icon-spin icon-large'></i>
             <div

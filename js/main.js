@@ -120,7 +120,8 @@ var vm = new window.Vue({
     */
     currentEvent: {
       title: '',
-      pins: []
+      pins: [],
+      bestPin: false
     },
 
     isCreatingWigot: false,
@@ -492,6 +493,25 @@ var vm = new window.Vue({
       markers.splice(index, 1);
     },
 
+    /*
+    * Détermine le meilleur pins === celui avec le plus haut score
+    */
+    setBestPin() {
+      // Pas de pins créé
+      if (this.currentEvent.pins.length <= 0) {
+        return
+      }
+
+      var pinScores = [];
+
+      this.currentEvent.pins.forEach((pin) => {
+        pinScores.push(pin.score);
+      });
+
+      var bestPin = Math.max.apply(Math, pinScores);
+
+      this.currentEvent.bestPin = bestPin;
+    },
 
 
     /*
