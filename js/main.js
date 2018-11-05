@@ -420,7 +420,18 @@ var vm = new window.Vue({
     },
 
     centerMap(coords) {
-      this.map.setView([coords.lat, coords.long], 15);
+      // Centers on one point only
+      if (coords) {
+        this.map.setView([coords.lat, coords.long], 15);
+      } else {
+        // Center on several points
+        var arrayOfLatLongsMarkers = [];
+        this.currentEvent.pins.forEach((pin) => {
+          arrayOfLatLongsMarkers.push([pin.coords.lat, pin.coords.long]);
+        });
+
+        this.map.fitBounds(arrayOfLatLongsMarkers);
+      }
     },
 
 
@@ -440,10 +451,10 @@ var vm = new window.Vue({
 
 
       // On centre la map sur le pin
-      this.centerMap({
+      /*this.centerMap({
         lat,
         long
-      });
+      });*/
 
       // Ici on sauvegarde une reférence vers le marker pour pouvoir le supprimer plus tard
       markers.push(newMarker);
@@ -469,6 +480,7 @@ var vm = new window.Vue({
       }
 
       this.currentEvent.pins.push(newPin);
+      this.centerMap();
     },
 
     addMarker: function () {
@@ -482,6 +494,14 @@ var vm = new window.Vue({
       this.searchResults = false;
 
       this.currentEvent.pins.push(newPin);
+    },
+
+    /*
+    * Vote pour un pin
+    */
+    increaseScorePin(index) {
+      this.currentEvent.pins[index].score += 1;
+      this.setBestPin();
     },
 
     /* 
@@ -508,9 +528,10 @@ var vm = new window.Vue({
         pinScores.push(pin.score);
       });
 
-      var bestPin = Math.max.apply(Math, pinScores);
+      var indexBestPin = pinScores.indexOf(Math.max(...pinScores));
 
-      this.currentEvent.bestPin = bestPin;
+      this.currentEvent.bestPin = Object.assign({}, this.currentEvent.pins[indexBestPin]);
+      console.log(this.currentEvent.bestPin)
     },
 
 
