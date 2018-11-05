@@ -4,7 +4,8 @@
 
 var SETTINGS = {
   isAuthEnabled: false,
-  shareURL: 'http://localhost:3000?id='
+  shareURL: 'http://localhost:3000?id=',
+  cookieNameFirstPart: 'wigot_event_'
 };
 
 var markers = [];
@@ -111,7 +112,7 @@ var vm = new window.Vue({
       sharing: 2
     },
 
-    appState: 2,
+    appState: 1,
 
     /*
     * Everything relative to the event currently in progress must be stored in this 
@@ -123,6 +124,8 @@ var vm = new window.Vue({
       pins: [],
       bestPin: false
     },
+
+    pinsCreated: 0,
 
     isCreatingWigot: false,
 
@@ -247,11 +250,7 @@ var vm = new window.Vue({
 
       // Here we create a ref to our Firebase DB and store it in the global state
       // Now we can access our database!
-      var db = firebase.firestore();
-      // Disable deprecated features
-      db.settings({
-        timestampsInSnapshots: true
-      });
+      var db = firebase.database();
       this.db = db;
 
       if (this.eventID) {
@@ -269,18 +268,48 @@ var vm = new window.Vue({
     },
 
     /*
+    * Generate ID
+    * from: https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
+    */
+    generateUUID() { // Public Domain/MIT
+        var d = Date.now();
+        if (typeof performance !== 'undefined' && typeof performance.now === 'function'){
+            d += performance.now(); //use high-precision timer if available
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = (d + Math.random() * 16) % 16 | 0;
+            d = Math.floor(d / 16);
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+    },
+
+    /*
     * Creates an event: here we create the id but we don't save it yet on the database
     */
     createEvent() {
       // Here we add this.currentEvent to the events collection in our database
       var self = this;
-      this.db.collection("events").add(this.currentEvent)
-      .then(function(docRef) {
-          console.log("Document written with ID: ", docRef.id);
-          self.toggleModal(true, eventCreatedComponent(docRef.id))
+
+      // Create a custom id
+      var newEventId = this.generateUUID();
+
+      // Save on Firebase
+      this.db.ref('/events/' + newEventId).set(this.currentEvent)
+      .then(() => {
+        console.log('SUCCESS in createEvent: event created.');
+        // Add the id to current event and update the event saved in DB
+        self.currentEvent.id = newEventId;
+        self.updateEvent();
+
+        // Create the cookie
+        self.setCookie(
+          `${SETTINGS.cookieNameFirstPart}${newEventId}`,
+          { user: self.currentUser },
+          100
+        );
       })
       .catch(function(error) {
-          console.error("Error adding document: ", error);
+        console.error("Error adding document: ", error);
       });
     },
 
@@ -289,10 +318,11 @@ var vm = new window.Vue({
     */
     fetchEvent(id) {
       var self = this;
-      this.db.collection('events').doc(id)
-      .get()
-      .then(function(doc) {
-        var eventFromDB = doc.data();
+      this.db.ref('/events/' + id)
+      .once('value')
+      .then(function(snapshot) {
+        var eventFromDB = snapshot.val();
+
         console.log('SUCCESS in main.js - fetchEvent(): doc.data() ===', eventFromDB);
 
         // We update the currentEvent object with our fetched data
@@ -304,6 +334,17 @@ var vm = new window.Vue({
         // so we 
         self.appState = this.appStates.wigotCreation;
       })
+    },
+
+    /*
+    * Update Event
+    */
+    updateEvent() {
+      var updates = {};
+
+      update['/events/' + this.currentEvent.id] = this.currentEvent;
+
+      this.db.ref().update(updates);
     },
 
     updateEventFromDB(event) {
@@ -441,6 +482,19 @@ var vm = new window.Vue({
     */
 
     addPin: function (data) {
+      // Restriction: max 3 pins when creating event
+      console.log(this.appState === this.appStates.wigotCreation, this.pinsCreated, this.pinsCreated >= 3)
+      if (this.appState === this.appStates.wigotCreation && this.pinsCreated >= 3) {
+        alert('Max pins quota reached!');
+        return
+      }
+
+      // Restriction: max 1 pin when not creating event
+      if (this.appState ===  this.appStates.sharing && this.pinsCreated >= 1) {
+        alert('Max pins quota reached!');
+        return
+      }
+
       var lat = data.coordinates.latitude.toString();
       var long = data.coordinates.longitude.toString();
 
@@ -480,6 +534,7 @@ var vm = new window.Vue({
       }
 
       this.currentEvent.pins.push(newPin);
+      this.pinsCreated += 1;
       this.centerMap();
     },
 
@@ -553,6 +608,40 @@ var vm = new window.Vue({
     */
     toggleSearchList(value) {
       this.isSearchResultsOpen = value;
+    },
+
+
+    /*
+    * Cookies
+    */
+    // from: https://stackoverflow.com/questions/14573223/set-cookie-and-get-cookie-with-javascript
+    // and: https://stackoverflow.com/questions/11344531/pure-javascript-store-object-in-cookie
+    /*
+      Example:
+
+      setCookie('ppkcookie', 'testcookie', 7);
+
+      var x = getCookie('ppkcookie');
+      if (x) {
+        [do something with x]
+      }
+    */
+    setCookie(name, value, days) {
+      var expires = "";
+      if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+      }
+      document.cookie = name + "=" + (JSON.Stringify(value) || "")  + expires + "; path=/";
+    },
+    getCookie(name) {
+     var result = document.cookie.match(new RegExp(name + '=([^;]+)'));
+     result && (result = JSON.parse(result[1]));
+     return result;
+    },
+    eraseCookie(name) {   
+      document.cookie = name+'=; Max-Age=-99999999;';  
     }
   }
 });
