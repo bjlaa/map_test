@@ -63,6 +63,68 @@ var loaderComponent = `
 </div>
 `
 
+var pinCreationInfoBoxComponent = `
+  <div class="pinCreationInfoBox">
+    <div class="pinCreationInfoBoxTitle">Create your pin:</div>
+    <form v-on:submit.prevent="createPinFromMap({ name: $ref.nameInputPin, address: $ref.addressInputPin })">
+      <div class="nameInput">
+        <label for="nameInputPin">
+          Name your pin:
+        </label>
+        <input
+          type="text"
+          id="nameInputPin"
+          ref="nameInputPin"
+          defaultValue=""
+        />
+      </div>
+      <div class="addressInput">
+        <label for="addressInputPin">
+        Add an address:
+        </label>
+        <input
+          type="text"
+          id="addressInputPin"
+          ref="addressInputPin"
+          defaultValue=""
+        />
+      </div>
+    </form>
+    <button
+      onclick="vm.cancelPinFromMap()"
+      class="pinCreationInfoBoxCancel btn btn-light"
+    >
+      Cancel
+    </button>
+    <button
+      onclick="vm.createPinFromMap({ name: document.getElementById('nameInputPin').value, address: document.getElementById('addressInputPin').value })"
+      class="pinCreationInfoBoxSubmit btn btn-primary"
+    >
+      Create
+    </button>
+  </div>
+`
+
+var pinPopup = function(pin) {
+  return `
+    <div class="pinPopup">
+      <div class="name">
+        ${pin.name}
+      </div>
+      <div class="address">
+        ${pin.address}
+      </div>
+      <button
+        class="btn btn-primary"
+        onclick="vm.increaseScorePin(false,${pin.id})"
+      >
+        Vote
+      </button>
+    </div>
+  `
+}
+
+
 /*
 * FirebaseUI config.
 
@@ -421,11 +483,17 @@ var vm = new window.Vue({
       // use the trick below: store this in a variable (usually "self")
       var self = this;
 
+      
       this.map.on('click', function(e) {
+        // Return if a marker is already in creation
+        if (self.markerInCreation) {
+          self.cancelPinFromMap();
+          self.markerInCreation = false;
+        }
         // Get the coordinates from Leaflet
         var latlng = self.map.mouseEventToLatLng(e.originalEvent);
 
-        self.addPin({ coordinates: { latitude: latlng.lat, longitude: latlng.lng  } });
+        self.addPinFromMap({ coordinates: { latitude: latlng.lat, longitude: latlng.lng  } });
       });
     },
 
@@ -468,7 +536,7 @@ var vm = new window.Vue({
         // Center on several points
         var arrayOfLatLongsMarkers = [];
         this.currentEvent.pins.forEach((pin) => {
-          arrayOfLatLongsMarkers.push([pin.coords.lat, pin.coords.long]);
+          arrayOfLatLongsMarkers.push([pin.coords.lat, pin.coords.lng]);
         });
 
         this.map.fitBounds(arrayOfLatLongsMarkers);
@@ -480,10 +548,8 @@ var vm = new window.Vue({
     /*
     * Pin: all the method relative to the pins
     */
-
-    addPin: function (data) {
+    addPinFromMap(data) {
       // Restriction: max 3 pins when creating event
-      console.log(this.appState === this.appStates.wigotCreation, this.pinsCreated, this.pinsCreated >= 3)
       if (this.appState === this.appStates.wigotCreation && this.pinsCreated >= 3) {
         alert('Max pins quota reached!');
         return
@@ -496,42 +562,98 @@ var vm = new window.Vue({
       }
 
       var lat = data.coordinates.latitude.toString();
-      var long = data.coordinates.longitude.toString();
+      var lng = data.coordinates.longitude.toString();
 
-      var newMarker = new L.marker([lat, long]).addTo(this.map);
+      var newMarker = new L.marker([lat, lng]).addTo(this.map);
+
+      newMarker.bindPopup(pinCreationInfoBoxComponent).openPopup();
+
+      this.markerInCreation = newMarker;
+    },
+
+    createPinFromMap(data) {
+      this.addPin(data, this.markerInCreation);
+
+      // To close the popup
+      // this.map.closePopup();
+    },
+
+    cancelPinFromMap() {
+      if (this.markerInCreation) {
+        this.map.removeLayer(this.markerInCreation);
+      }
+    },
+
+    addPin: function (data, markerInCreation) {
+      // Restriction: max 3 pins when creating event
+      if (this.appState === this.appStates.wigotCreation && this.pinsCreated >= 3) {
+        alert('Max pins quota reached!');
+        return
+      }
+
+      // Restriction: max 1 pin when not creating event
+      if (this.appState ===  this.appStates.sharing && this.pinsCreated >= 1) {
+        alert('Max pins quota reached!');
+        return
+      }
+      var newMarker;
+      var lat;
+      var lng;
+      if (markerInCreation) {
+        newMarker = markerInCreation;
+        lat = newMarker._latlng.lat;
+        lng = newMarker._latlng.lng;
+      } else {
+        lat = data.coordinates.latitude.toString();
+        lng = data.coordinates.longitude.toString();
+
+        newMarker = new L.marker([lat, lng]).addTo(this.map);      
+      }
+
+      this.markerInCreation = false;
+      
 
       // On ferme la liste mais on garde les résultats
       this.isSearchResultsOpen = false;
 
-
-      // On centre la map sur le pin
-      /*this.centerMap({
-        lat,
-        long
-      });*/
-
       // Ici on sauvegarde une reférence vers le marker pour pouvoir le supprimer plus tard
       markers.push(newMarker);
+
+      /*
+      newMarker.on('click', function(e) {
+        var popup = L.popup()
+         .setLatLng(e.latlng) 
+         .setContent(pinCreationInfoBoxComponent)
+         .openOn(map);
+      })*/
 
       var newPin = {
         id: newMarker._leaflet_id,
         score: 0,
         coords: {
           lat: lat,
-          long: long
+          lng: lng
         }
       };
 
       if (data && data.name) {
         newPin.name = data.name;
       }
+
       if (data && data.location) {
         newPin.address = data.location.address1;
         newPin.city = data.location.city;    
       }
+      if (data && data.address) {
+        newPin.address = data.address;
+      }
       if (data && data.image_url) {
         newPin.image = data.location.image_url
       }
+
+      // Bind new popup content and show it
+      var newContent = pinPopup(newPin);
+      newMarker.bindPopup(newContent).openPopup();
 
       this.currentEvent.pins.push(newPin);
       this.pinsCreated += 1;
@@ -554,9 +676,22 @@ var vm = new window.Vue({
     /*
     * Vote pour un pin
     */
-    increaseScorePin(index) {
-      this.currentEvent.pins[index].score += 1;
-      this.setBestPin();
+    increaseScorePin(index, pinId) {
+      console.log(pinId)
+      if (index) {
+        this.currentEvent.pins[index].score += 1;
+        this.setBestPin();        
+      } else if (pinId) {
+        var indexPin;
+
+        this.currentEvent.pins.forEach((pin, index) => {
+          if (pin.id === pinId) {
+            indexPin = index;
+          }
+        });
+
+        this.currentEvent.pins[indexPin].score += 1;
+      }
     },
 
     /* 

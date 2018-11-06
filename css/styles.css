@@ -199,3 +199,25 @@ li {
   background: #337ab7;
   border: none;
 }
+
+/*
+* PinCreationInfoBox
+*/
+.pinCreationInfoBox {
+
+}
+.pinCreationInfoBoxTitle {
+  margin-bottom: 20px;
+  font-size: 12pt;
+}
+
+.pinCreationInfoBox label {
+  width: 100%;
+}
+.pinCreationInfoBox input {
+  width: 100%;
+}
+.addressInput {
+  margin-bottom: 20px;
+}
+

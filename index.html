@@ -59,7 +59,7 @@
                   v-model="inputPin"
                   ref="modif"
                   placeholder="Search for a location or a venue"
-                  @focus="toggleSearchList(true)"
+                  @focus="toggleSearchList(true);cancelPinFromMap();"
                 >
                 <button
                   type="button"
@@ -125,9 +125,11 @@
                   <div class="card-body">
                     <table>
                       <tbody>
-                        <tr v-for="(pin, index) in currentEvent.pins">
+                        <tr v-if="currentEvent.pins.length > 0" v-for="(pin, index) in currentEvent.pins">
+
                           <td>{{ pin.name }}</td>
                           <td>{{ pin.address }}</td>
+                          <td class="scorePin">Score: {{ pin.score ? pin.score : null}}</td>
                           <td><button type="button" @click="increaseScorePin(index)">Like</button>
                           <td><button type="button" class="delete" @click="deletePin(index)">Delete</button>  
                         </tr>
