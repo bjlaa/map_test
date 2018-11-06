@@ -677,8 +677,7 @@ var vm = new window.Vue({
     * Vote pour un pin
     */
     increaseScorePin(index, pinId) {
-      console.log(pinId)
-      if (index) {
+      if (index !== (false || null)) {
         this.currentEvent.pins[index].score += 1;
         this.setBestPin();        
       } else if (pinId) {
