@@ -37,13 +37,13 @@ var loginComponent = `
 `;
 var createEventComponent = `
   <div class="createEvent">
-    <h4>Create an event:</h4>
+    <h4>You're a few steps away blabla...</h4>
+    <h5 class="guestList">Set your name:</h5>
+    <input required id="createEventNameAuthor" class="searchInput form-control" type="text">
     <h5 class="modalTitle">Name your event:</h5>
-    <input class="searchInput form-control" type="text">
-    <h5 class="guestList">Invite your friends/family members:</h5>
-    <input class="searchInput form-control" type="text">
-    <button class="btn btn-primary" @click="createEvent()">Create event</button>
-    <button class="btn btn-primary" @click="toggleModal()">Close modal</button>
+    <input required id="createEventNameEvent" class="searchInput form-control" type="text">
+    <button class="btn btn-light" onclick="vm.toggleModal(false)">Close modal</button>
+    <button class="btn btn-primary" onclick="vm.createEvent()">Create event</button>
   </div>
 `;
 
@@ -56,6 +56,14 @@ return `
   </div>
 `  
 }
+
+var getUsernameComponent = `
+  <div class="getUsername">
+    <div class="title">Please choose a name to participate:</div>
+    <input required id="usernameInput" type="text" />
+    <button class="btn btn-primary" onclick="vm.saveUsername();vm.showWelcomeMessage();">Create event</button>
+  </div>
+`
 
 var loaderComponent = `
 <div class="loader">
@@ -124,6 +132,13 @@ var pinPopup = function(pin) {
   `
 }
 
+var welcomeComponent = function(eventName) {
+  return `
+    <div class="welcome">
+      <h3>Welcome to ${eventName}!</h3>
+    </div>
+  `
+}
 
 /*
 * FirebaseUI config.
@@ -219,9 +234,14 @@ var vm = new window.Vue({
   */
   beforeMount() {
     this.parseURL();
+
   },
 
   mounted() {
+    if (this.eventID && !this.currentUser) {
+      this.toggleModal(true, getUsernameComponent);
+    }
+
     this.initFirebase();
     this.initMap();
 
@@ -281,10 +301,19 @@ var vm = new window.Vue({
       var currentURL = window.location.href;
 
       var match = currentURL.match(/id=([^&]+)/);
-
+      var self = this;
       if (match) {
+        // Switch to share mode: le mec a partagé son event
+        this.appState = this.appStates.sharing;
+
         // Store the ID in the state
         this.eventID = match[1];
+        var cookie = this.getCookie(`${SETTINGS.cookieNameFirstPart}${this.eventID}`);
+        
+        if (cookie && cookie.user) {
+          this.currentUser = cookie.user.name;
+          this.pinsCreated = cookie.user.pinsCreated;
+        }
       } else {
         // If no ID is passed in the URL then we are in create mode
         // we show the create button: the idea is not to create an entry in the database 
@@ -348,9 +377,18 @@ var vm = new window.Vue({
     /*
     * Creates an event: here we create the id but we don't save it yet on the database
     */
+    toggleCreateEvent() {
+      this.toggleModal(true, createEventComponent);
+    },
+
     createEvent() {
       // Here we add this.currentEvent to the events collection in our database
       var self = this;
+
+      var eventName = document.getElementById('createEventNameEvent').value;
+      var eventAuthor = document.getElementById('createEventNameAuthor').value;
+
+      this.currentEvent.name = eventName;
 
       // Create a custom id
       var newEventId = this.generateUUID();
@@ -366,9 +404,15 @@ var vm = new window.Vue({
         // Create the cookie
         self.setCookie(
           `${SETTINGS.cookieNameFirstPart}${newEventId}`,
-          { user: self.currentUser },
+          { user: {
+              name: eventAuthor,
+              pinsCreated: this.pinsCreated
+            }
+          },
           100
         );
+
+        self.toggleModal(true, eventCreatedComponent(newEventId));
       })
       .catch(function(error) {
         console.error("Error adding document: ", error);
@@ -404,7 +448,7 @@ var vm = new window.Vue({
     updateEvent() {
       var updates = {};
 
-      update['/events/' + this.currentEvent.id] = this.currentEvent;
+      updates['/events/' + this.currentEvent.id] = this.currentEvent;
 
       this.db.ref().update(updates);
     },
@@ -414,12 +458,38 @@ var vm = new window.Vue({
       // Update this.currentEvent
       this.currentEvent = event;
       // Add the pins
-      event.pins.forEach(function(pin) {
-        self.addPin(pin.coords.lat, pin.coords.long, pin);
-      });
+      if (event.pins && event.pins.length > 0) {
+        event.pins.forEach(function(pin) {
+          self.addPin(pin.coords.lat, pin.coords.long, pin);
+        });        
+      } else {
+        this.currentEvent.pins = [];
+      }
     },
 
+    saveUsername() {
+      var username = document.getElementById('usernameInput').value;
 
+      // Create the cookie
+      this.setCookie(
+        `${SETTINGS.cookieNameFirstPart}${this.eventID}`,
+        { user: {
+            name: username,
+            pinsCreated: this.pinsCreated
+          }
+        },
+        100
+      );
+    },
+
+    showWelcomeMessage() {
+      this.toggleModal(true, welcomeComponent(this.currentEvent.name));
+
+      var self = this;
+      setTimeout(() => {
+        self.toggleModal(false);
+      }, 2000)
+    },
     /*
     * Authentication part
     */
@@ -591,7 +661,7 @@ var vm = new window.Vue({
         alert('Max pins quota reached!');
         return
       }
-
+      console.log(this.pinsCreated, this.appState ===  this.appStates.sharing)
       // Restriction: max 1 pin when not creating event
       if (this.appState ===  this.appStates.sharing && this.pinsCreated >= 1) {
         alert('Max pins quota reached!');
@@ -659,6 +729,12 @@ var vm = new window.Vue({
       this.currentEvent.pins.push(newPin);
       this.pinsCreated += 1;
       this.centerMap();
+
+      console.log(this.currentEvent)
+
+      if (this.appState === this.appStates.sharing) {
+        this.updateEvent();
+      }
     },
 
     addMarker: function () {
@@ -679,8 +755,7 @@ var vm = new window.Vue({
     */
     increaseScorePin(index, pinId) {
       if (index !== false) {
-        this.currentEvent.pins[index].score += 1;
-        this.setBestPin();        
+        this.currentEvent.pins[index].score += 1;       
       } else if (pinId) {
         var indexPin;
 
@@ -692,6 +767,12 @@ var vm = new window.Vue({
 
         this.currentEvent.pins[indexPin].score += 1;
       }
+
+      this.setBestPin();
+
+      if (this.appState === this.appStates.sharing) {
+        this.updateEvent();
+      }
     },
 
     /* 
@@ -701,6 +782,12 @@ var vm = new window.Vue({
       this.map.removeLayer(markers[index]);
       this.currentEvent.pins.splice(index, 1);
       markers.splice(index, 1);
+
+      this.setBestPin();
+
+      if (this.appState === this.appStates.sharing) {
+        this.updateEvent();
+      }
     },
 
     /*
@@ -762,19 +849,22 @@ var vm = new window.Vue({
       }
     */
     setCookie(name, value, days) {
+      console.log(name)
       var expires = "";
       if (days) {
         var date = new Date();
         date.setTime(date.getTime() + (days*24*60*60*1000));
         expires = "; expires=" + date.toUTCString();
       }
-      document.cookie = name + "=" + (JSON.Stringify(value) || "")  + expires + "; path=/";
+      document.cookie = name + "=" + (JSON.stringify(value) || "")  + expires + "; path=/";
     },
+
     getCookie(name) {
      var result = document.cookie.match(new RegExp(name + '=([^;]+)'));
      result && (result = JSON.parse(result[1]));
      return result;
     },
+
     eraseCookie(name) {   
       document.cookie = name+'=; Max-Age=-99999999;';  
     }

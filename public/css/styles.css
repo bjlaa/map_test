@@ -157,7 +157,7 @@ li {
   left: 50%;
   transform: translate(-50%, -50%);
   border-radius: 10px;
-  background: #FAFAFA;
+  background: #fefefe;
   padding: 20px;
   box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 }
@@ -239,4 +239,18 @@ li {
 .pinPopup button {
   margin-left: auto!important;
   display: block!important;
+}
+
+/*
+* Create event component
+*/
+.createEvent input {
+  margin-bottom: 10px;
+}
+.createEvent #createEventNameEvent {
+  margin-bottom: 20px;
+}
+
+.createEvent button:first-child {
+  margin-left: auto!important;
 }
