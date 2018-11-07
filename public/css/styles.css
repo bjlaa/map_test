@@ -216,8 +216,27 @@ li {
 }
 .pinCreationInfoBox input {
   width: 100%;
+  margin-bottom: 10px;
 }
 .addressInput {
   margin-bottom: 20px;
 }
 
+/*
+* PinPopup
+*/
+.pinPopup {
+  min-width: 150px;
+}
+.pinPopup .name {
+  margin-bottom: 5px;
+  font-size: 12pt;
+  font-weight: bold;
+}
+.pinPopup .address {
+  margin-bottom: 20px;
+}
+.pinPopup button {
+  margin-left: auto!important;
+  display: block!important;
+}

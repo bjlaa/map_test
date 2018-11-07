@@ -116,7 +116,7 @@ var pinPopup = function(pin) {
       </div>
       <button
         class="btn btn-primary"
-        onclick="vm.increaseScorePin(false,${pin.id})"
+        onclick="vm.increaseScorePin(false, ${pin.id})"
       >
         Vote
       </button>
@@ -473,8 +473,8 @@ var vm = new window.Vue({
       this.tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', //'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
       {
       maxZoom: 19,
-      id: 'mapbox.streets',
-      accessToken: 'pk.eyJ1IjoiYmpsYWEiLCJhIjoiY2pubzRmYm1iMGI5czNycTFsYTJpZng5biJ9.hbgbuJ24OKVcx4xELavpoQ',
+      // id: 'mapbox.streets',
+      // accessToken: 'pk.eyJ1IjoiYmpsYWEiLCJhIjoiY2pubzRmYm1iMGI5czNycTFsYTJpZng5biJ9.hbgbuJ24OKVcx4xELavpoQ',
       // styles: 'mapbox://styles/bjlaa/cjo7a5k5y1quq2snz10gxwkgu',
       attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
       }).addTo(this.map);
@@ -565,7 +565,7 @@ var vm = new window.Vue({
       var lat = data.coordinates.latitude.toString();
       var lng = data.coordinates.longitude.toString();
 
-      var newMarker = new L.marker([lat, lng]).addTo(this.map);
+      var newMarker = new L.marker([lat, lng], { riseOnHover: true }).addTo(this.map);
 
       newMarker.bindPopup(pinCreationInfoBoxComponent).openPopup();
 
@@ -678,7 +678,7 @@ var vm = new window.Vue({
     * Vote pour un pin
     */
     increaseScorePin(index, pinId) {
-      if (index !== (false || null)) {
+      if (index !== false) {
         this.currentEvent.pins[index].score += 1;
         this.setBestPin();        
       } else if (pinId) {

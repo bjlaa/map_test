@@ -113,7 +113,7 @@
                 <div class="card-body">
                   <!-- Affichage du meilleur pin en fonction du score. La liste des pins ajoutés est ordonnées en fonction de la valeur score,
                         la partie ci-dessous affiche donc le premier élément [0] du tableau -->
-                  <p>Le pin #1 est {{ currentEvent.bestPin.name }} - {{ currentEvent.bestPin.location && currentEvent.bestPin.location.address1 }}, {{ currentEvent.bestPin.location && currentEvent.bestPin.location.zip_code }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.city }}</p>
+                  <p>Le pin #1 est {{ currentEvent.bestPin.name }}</p>
                 </div>
                 </div>
               </div>
@@ -128,7 +128,6 @@
                         <tr v-if="currentEvent.pins.length > 0" v-for="(pin, index) in currentEvent.pins">
 
                           <td>{{ pin.name }}</td>
-                          <td>{{ pin.address }}</td>
                           <td class="scorePin">Score: {{ pin.score ? pin.score : null}}</td>
                           <td><button type="button" @click="increaseScorePin(index)">Like</button>
                           <td><button type="button" class="delete" @click="deletePin(index)">Delete</button>  
