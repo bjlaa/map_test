@@ -737,19 +737,6 @@ var vm = new window.Vue({
       }
     },
 
-    addMarker: function () {
-      var newMarker = new L.marker([this.searchResults[0].coordinates.latitude, this.searchResults[0].coordinates.longitude]).addTo(this.map);
-
-      var newPin = {
-        name: this.searchResults[0].name,
-        address: this.searchResults[0].location.address1,
-      };
-
-      this.searchResults = false;
-
-      this.currentEvent.pins.push(newPin);
-    },
-
     /*
     * Vote pour un pin
     */

@@ -19,21 +19,25 @@
 * Search Bar
 */
 .searchBar {
-  max-width: 75%;
+  width: 75%;
   display: flex;
   z-index: 1;
-  margin-top: 10px;
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  border-radius: 30px;
+  overflow: hidden;
 }
 .searchBarForm {
   width: 100%;
   display: flex;
 }
 .searchInput {
-  border-radius: 3px 0px 0px 3px!important;
+  border-radius: 30px 0px 0px 30px!important;
 }
 .searchButton {
-  border-radius: 0px 3px 3px 0px!important;
+  border-radius: 0px 30px 30px 0px!important;
   position: relative;
   height: 34px;
   min-width: 100px;
@@ -73,12 +77,6 @@ li {
 /*
 * Map
 */
-.mapContainer {
-  width: calc(100% - 400px);
-  height: 100%;
-  padding: 10px;
-  position: relative;
-}
 .map {
   height: 100%;
   width: 100%;
@@ -95,14 +93,19 @@ li {
 }
 .sidebar {
   position: fixed;
-  top: 0.5px;
-  right: 0.5px;
-  width: 25%;
+  top: 10px;
+  right: 10px;
+  width: calc(25% - 30px);
   padding: 15px 10px;
-    
+  height: calc(100% - 40px);
 }
 .card {
-  box-shadow: 0rem .5rem 1rem rgba(0,0,0,.3);
+  /*
+    C'est une box-shadow material design == design google utilisé et reconnu pour faire le job: https://codepen.io/sdthornton/pen/wBZdXq
+    un peu plus léger que celle que tu avais mise avant
+  */
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  /*box-shadow: 0rem .5rem 1rem rgba(0,0,0,.3);*/
   background-color: #fff;
   border-radius: 0.8rem;
   padding: 2px 16px 2px 16px;
@@ -143,6 +146,7 @@ li {
 }
 .logoIcon {
   margin-right: 5px;
+  max-width: 200px;
 }
 .LogoPic {
     width: 100%;
