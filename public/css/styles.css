@@ -97,7 +97,12 @@ li {
   height: calc(100vh - 10px);
   margin-left: 0;
 }
-
+.deletePin {
+  border: none;
+  background: rgba(0,0,0,0);
+  color: indianred;
+  margin-left: 10px;
+}
 /*
 * Logo
 */
