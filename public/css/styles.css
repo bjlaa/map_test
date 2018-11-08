@@ -19,7 +19,7 @@
 * Search Bar
 */
 .searchBar {
-  max-width: 100%;
+  max-width: 75%;
   display: flex;
   z-index: 1;
   margin-top: 10px;
@@ -41,7 +41,7 @@
 .searchList {
   padding-left: 0;
   border-radius: 0 0 3px 3px;
-  max-width: calc(100% - 100px);
+  max-width: calc(75% - 100px);
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
 }
 .searchListItem {
@@ -91,18 +91,26 @@ li {
 * Side bar
 */
 .sidebar {
-  margin: 5px;
-  padding: 20px;
-  width: 100%;
-  height: calc(100vh - 10px);
-  margin-left: 0;
+  position: fixed;
+  top: 0.5px;
+  right: 0.5px;
+  width: 25%;
+  padding: 15px 10px;
+    
 }
-.deletePin {
-  border: none;
-  background: rgba(0,0,0,0);
-  color: indianred;
-  margin-left: 10px;
+.card {
+  box-shadow: 0rem .5rem 1rem rgba(0,0,0,.3);
+  background-color: #fff;
+  border-radius: 0.8rem;
+  padding: 2px 16px 2px 16px;
 }
+.btn-circle {
+  width: 30px;
+  height: 30px;
+  line-height: 1.428571429;
+  border-radius: 15px;
+}
+
 /*
 * Logo
 */
@@ -123,6 +131,10 @@ li {
 }
 .logoIcon {
   margin-right: 5px;
+}
+.LogoPic {
+    width: 100%;
+    height: 100%;
 }
 .logoBaseline {
   font-size: 10pt;
@@ -162,7 +174,7 @@ li {
   left: 50%;
   transform: translate(-50%, -50%);
   border-radius: 10px;
-  background: #fefefe;
+  background: #FAFAFA;
   padding: 20px;
   box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 }
@@ -187,14 +199,7 @@ li {
 /*
 * Create Wigot
 */
-.createWigot {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translate(-50%);
-  width: 100%;
-  max-width: 300px;
-}
+
 .createWigotButton {
   margin: 20px auto;
   display: block;
@@ -221,41 +226,8 @@ li {
 }
 .pinCreationInfoBox input {
   width: 100%;
-  margin-bottom: 10px;
 }
 .addressInput {
   margin-bottom: 20px;
 }
 
-/*
-* PinPopup
-*/
-.pinPopup {
-  min-width: 150px;
-}
-.pinPopup .name {
-  margin-bottom: 5px;
-  font-size: 12pt;
-  font-weight: bold;
-}
-.pinPopup .address {
-  margin-bottom: 20px;
-}
-.pinPopup button {
-  margin-left: auto!important;
-  display: block!important;
-}
-
-/*
-* Create event component
-*/
-.createEvent input {
-  margin-bottom: 10px;
-}
-.createEvent #createEventNameEvent {
-  margin-bottom: 20px;
-}
-
-.createEvent button:first-child {
-  margin-left: auto!important;
-}
