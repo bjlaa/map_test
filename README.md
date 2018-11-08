@@ -7,7 +7,7 @@ To run the development server you'll need to install browser-sync on your comput
 npm install -g browser-sync
 ```
 
-Once this is done, change directory to the folder map_test and type in:
+Once this is done, change directory to the folder map_test/public and type in:
 ```
 ./startDevServer.sh
 ```
