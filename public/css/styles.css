@@ -90,6 +90,9 @@ li {
 /*
 * Side bar
 */
+.wigotTitle {
+    text-align: center;
+}
 .sidebar {
   position: fixed;
   top: 0.5px;
@@ -109,6 +112,15 @@ li {
   height: 30px;
   line-height: 1.428571429;
   border-radius: 15px;
+}
+.pinName {
+    font-style: italic;
+}
+.markerIcon {
+    max-width: 40%;
+    max-height: 40%;
+}
+.likeButton:before {
 }
 
 /*
@@ -205,8 +217,8 @@ li {
   display: block;
   color: white;
   padding: 10px 15px;
-  border-radius: 3px;
-  background: #337ab7;
+  border-radius: 50px;
+  background: #4A89F3;
   border: none;
 }
 
