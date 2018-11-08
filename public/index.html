@@ -106,10 +106,10 @@
             <br>
             <!-- Titre du Wigot en cours, modifiable par tout le monde (fun) -->
             <div class="wigotTitle"><h3><strong>Titre Wigot</strong></h3></div>
-
+              <br>
               <div>
                 <div class="content">
-                  <h3 class="content-header">Meilleur Pin</h3>
+                  <h4 class="content-header">Tonight we go to...</h4>
                 <div class="content-body">
                   <!-- Affichage du meilleur pin en fonction du score. La liste des pins ajoutés est ordonnées en fonction de la valeur score,
                         la partie ci-dessous affiche donc le premier élément [0] du tableau -->
@@ -117,25 +117,29 @@
                 </div>
                 </div>
               </div>
+              <br>
+              
               <div>
                 <div class="content">
                   <div class="content-header">
-                    <h4>Pins ajoutés :</h4>
+                    <h4>Places added</h4>
                   </div>
                   <div class="content-body">
                     <table>
                       <tbody>
                         <tr v-if="currentEvent.pins.length > 0" v-for="(pin, index) in currentEvent.pins">
 
-                          <td>{{ pin.name }}</td>
-                          <td>{{ pin.address }}</td>
-                          <td class="scorePin">Score: {{ pin.score ? pin.score : null}}</td>
-                          <td><button type="button" class="btn btn-success btn-circle" @click="increaseScorePin(index)">Like</button>
-                          <td><button type="button" class="btn btn-danger btn-circle" @click="deletePin(index)">Delete</button>  
+                          <td class="iconCell" width=20%><img class="markerIcon" src="./assets/markerIcon.png"></td>    
+                          <td class="pinName" width=50%>{{ pin.name }}</td>
+                          <td class="scorePin" width=10%><span v-show="pin.score > 0" class="badge badge-pill badge-warning">{{ pin.score ? pin.score : null}}</span></td>
+                          <td width=10%><button type="button" class="likeButton btn btn-success btn-circle" @click="increaseScorePin(index)"></button>
+                          <td width=10%><button type="button" class="deleteButton btn btn-danger btn-circle" @click="deletePin(index)"></button>  
                         </tr>
                       </tbody>
                     </table>
                   </div>
+                    
+                <br>
                   <!--
                     Create WIGOT button renderer conditionally
                     if appState is in wigotCreation mode
