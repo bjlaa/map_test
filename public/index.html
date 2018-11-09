@@ -94,71 +94,69 @@
               style="height: 800px;"
             ></div>  
         </div>
-        <div class="sidebar">
-          <aside class="card">
-            <div class="logo">
-              <div class="logoMain">
-                <div class="logoIcon">
-                <img class="LogoPic" src="./assets/Wigot_Logo.png">
-                </div>                
+        <aside class="sidebar card">
+          <div class="logo">
+            <div class="logoMain">
+              <div class="logoIcon">
+              <img class="LogoPic" src="./assets/Wigot_Logo.png">
+              </div>                
+            </div>
+          </div>
+          <br>
+          <!-- Titre du Wigot en cours, modifiable par tout le monde (fun) -->
+          <div class="wigotTitle"><h3><strong>Titre Wigot</strong></h3></div>
+            <br>
+            <div>
+              <div class="content">
+                <h4 class="content-header">Tonight we go to...</h4>
+              <div class="content-body">
+                <!-- Affichage du meilleur pin en fonction du score. La liste des pins ajoutés est ordonnées en fonction de la valeur score,
+                      la partie ci-dessous affiche donc le premier élément [0] du tableau -->
+                <p class="bestLoc">{{ currentEvent.bestPin.name }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.address1 }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.zip_code }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.city }}</p>
+              </div>
               </div>
             </div>
             <br>
-            <!-- Titre du Wigot en cours, modifiable par tout le monde (fun) -->
-            <div class="wigotTitle"><h3><strong>Titre Wigot</strong></h3></div>
-              <br>
-              <div>
-                <div class="content">
-                  <h4 class="content-header">Tonight we go to...</h4>
+            
+            <div>
+              <div class="content">
+                <div class="content-header">
+                  <h4>Places added</h4>
+                </div>
                 <div class="content-body">
-                  <!-- Affichage du meilleur pin en fonction du score. La liste des pins ajoutés est ordonnées en fonction de la valeur score,
-                        la partie ci-dessous affiche donc le premier élément [0] du tableau -->
-                  <p class="bestLoc">{{ currentEvent.bestPin.name }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.address1 }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.zip_code }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.city }}</p>
-                </div>
-                </div>
-              </div>
-              <br>
-              
-              <div>
-                <div class="content">
-                  <div class="content-header">
-                    <h4>Places added</h4>
-                  </div>
-                  <div class="content-body">
-                    <table>
-                      <tbody>
-                        <tr v-if="currentEvent.pins.length > 0" v-for="(pin, index) in currentEvent.pins">
+                  <table>
+                    <tbody>
+                      <tr v-if="currentEvent.pins.length > 0" v-for="(pin, index) in currentEvent.pins">
 
-                          <td class="iconCell" width=20%><img class="markerIcon" src="./assets/markerIcon.png"></td>    
-                          <td class="pinName" width=50%>{{ pin.name }}</td>
-                          <td class="scorePin" width=10%><span v-show="pin.score > 0" class="badge badge-pill badge-warning">{{ pin.score ? pin.score : null}}</span></td>
-                          <td width=10% class="like"><button type="button" class="likeButton btn btn-default" @click="increaseScorePin(index)"><span class="glyphicon glyphicon-heart" style="color: red"></span></button>
-                          <td width=10% class="delete"><button type="button" class="deleteButton btn btn-danger" @click="deletePin(index)"><span class="glyphicon glyphicon-trash"></span></button>  
-                        </tr>
-                      </tbody>
-                    </table>
+                        <td class="iconCell" width=20%><img class="markerIcon" src="./assets/markerIcon.png"></td>    
+                        <td class="pinName" width=50%>{{ pin.name }}</td>
+                        <td class="scorePin" width=10%><span v-show="pin.score > 0" class="badge badge-pill badge-warning">{{ pin.score ? pin.score : null}}</span></td>
+                        <td width=10% class="like"><button type="button" class="likeButton btn btn-default" @click="increaseScorePin(index)"><span class="glyphicon glyphicon-heart" style="color: red"></span></button>
+                        <td width=10% class="delete"><button type="button" class="deleteButton btn btn-danger" @click="deletePin(index)"><span class="glyphicon glyphicon-trash"></span></button>  
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                  
+              <br>
+                <!--
+                  Create WIGOT button renderer conditionally
+                  if appState is in wigotCreation mode
+                -->
+                <div v-if="appState === appStates.wigotCreation" class="createWigot">
+                  <div class="createWigotText">
+                    Everything set up? Create your Wigot to start sharing it.
                   </div>
-                    
-                <br>
-                  <!--
-                    Create WIGOT button renderer conditionally
-                    if appState is in wigotCreation mode
-                  -->
-                  <div v-if="appState === appStates.wigotCreation" class="createWigot">
-                    <div class="createWigotText">
-                      Everything set up? Create your Wigot to start sharing it.
-                    </div>
-                    <button
-                      @click="createEvent"
-                      class="createWigotButton"
-                    >
-                      Create Wigot
-                    </button>
-                  </div>
+                  <button
+                    @click="createEvent"
+                    class="createWigotButton"
+                  >
+                    Create Wigot
+                  </button>
                 </div>
               </div>
-          </aside>
-        </div>
+            </div>
+        </aside>
     </div>
     <script src="https://unpkg.com/vue@2.0.3/dist/vue.js"></script>
     <script type="text/javascript" src="./js/main.js"></script>

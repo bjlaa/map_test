@@ -38,14 +38,13 @@
 * Search Bar
 */
 .searchBar {
-  max-width: 75%;
+  width: calc(75% - 40px);
   display: flex;
   z-index: 1;
-  margin-top: 10px;
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
   position: fixed;
-  top: 10px;
-  left: 10px;
+  top: 20px;
+  left: 20px;
   border-radius: 50px;
   overflow: hidden;
 }
@@ -123,14 +122,20 @@ li {
 }
 .sidebar {
   position: fixed;
-  top: 0.5px;
-  right: 0.5px;
-  width: 25%;
+  top: 20px;
+  right: 20px;
+  width: calc(25% - 20px);
   padding: 15px 10px;
-    
+  height: calc(100vh - 40px);
 }
 .card {
-  box-shadow: 0rem .5rem 1rem rgba(0,0,0,.3);
+  /*
+    Material design box-shadow (card 2): https://codepen.io/sdthornton/pen/wBZdXq
+    c'est les normes design de google reconnues et utilisées 
+    >> un peu moins marquée que celle que tu avais utilisée avant
+  */
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  /*box-shadow: 0rem .5rem 1rem rgba(0,0,0,.3);*/
   background-color: #fff;
   border-radius: 0.8rem;
   padding: 2px 16px 2px 16px;
@@ -182,6 +187,7 @@ li {
 }
 .logoIcon {
   margin-right: 5px;
+  max-width: 200px;
 }
 .LogoPic {
     width: 100%;
