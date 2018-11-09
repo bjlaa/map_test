@@ -38,9 +38,10 @@
 * Search Bar
 */
 .searchBar {
-  width: 75%;
+  max-width: 75%;
   display: flex;
   z-index: 1;
+  margin-top: 10px;
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
   position: fixed;
   top: 10px;
@@ -96,6 +97,12 @@ li {
 /*
 * Map
 */
+.mapContainer {
+  width: calc(100% - 400px);
+  height: 100%;
+  padding: 10px;
+  position: relative;
+}
 .map {
   height: 100%;
   width: 100%;
@@ -110,21 +117,20 @@ li {
 .wigotTitle {
     text-align: center;
 }
+.bestLoc {
+    text-align: center;
+    font-weight: bold;
+}
 .sidebar {
   position: fixed;
-  top: 10px;
-  right: 10px;
-  width: calc(25% - 30px);
+  top: 0.5px;
+  right: 0.5px;
+  width: 25%;
   padding: 15px 10px;
-  height: calc(100% - 40px);
+    
 }
 .card {
-  /*
-    C'est une box-shadow material design == design google utilisé et reconnu pour faire le job: https://codepen.io/sdthornton/pen/wBZdXq
-    un peu plus léger que celle que tu avais mise avant
-  */
-  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-  /*box-shadow: 0rem .5rem 1rem rgba(0,0,0,.3);*/
+  box-shadow: 0rem .5rem 1rem rgba(0,0,0,.3);
   background-color: #fff;
   border-radius: 0.8rem;
   padding: 2px 16px 2px 16px;
@@ -142,7 +148,18 @@ li {
     max-width: 40%;
     max-height: 40%;
 }
-.likeButton:before {
+.likeButton {
+    border-radius: 10px;
+    border: 2px solid LightGrey;
+}
+.deleteButton {
+    border-radius: 10px;
+}
+.like {
+    padding: 2px;
+}
+.delete {
+    padding: 2px;
 }
 
 /*
@@ -165,7 +182,6 @@ li {
 }
 .logoIcon {
   margin-right: 5px;
-  max-width: 200px;
 }
 .LogoPic {
     width: 100%;
