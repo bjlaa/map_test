@@ -263,11 +263,19 @@ var vm = new window.Vue({
       // et on remplace le contenu du bouton par un loader le temps que la requête ait lieu
       searchButton.innerHTML = loaderComponent;
 
-      fetch(`https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?term=${searchTerm}&location=paris`, {
-        method: 'GET',
+      fetch(/*'http://localhost:7777/searchYelp'*/`https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?term=${searchTerm}&location=paris`, {
+        method: 'POST',
         headers: new Headers({
           'Authorization': 'Bearer iCcyWIWqSEQEq56EGlgg_Qa1kK8R_Mpv8910GXr6Y_iKIXsLw1676ecmJDIBDX-_0lTDl9MUzJIGFoYCWzBQYRpfvgrzCb_pusHv65VwnEMRcMWom4AV-ikLvoHYW3Yx'
-        })
+        }),/*
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        mode: "cors",
+        body: JSON.stringify({
+          term: searchTerm,
+          bearer: 'iCcyWIWqSEQEq56EGlgg_Qa1kK8R_Mpv8910GXr6Y_iKIXsLw1676ecmJDIBDX-_0lTDl9MUzJIGFoYCWzBQYRpfvgrzCb_pusHv65VwnEMRcMWom4AV-ikLvoHYW3Yx'
+        })*/
       })
       .then((response) => {
         return response.json()
