@@ -6,6 +6,11 @@
   opacity: 1!important;
 }
 
+img,
+svg {
+  max-width: 100%;
+}
+
 /*
   Classes à réutiliser sur les boutons pour pas répéter trop de code
 */
@@ -42,33 +47,69 @@
   display: flex;
   z-index: 1;
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  border-radius: 50px;
+  border-radius: 5px;
   overflow: hidden;
+  margin-top: 20px;
+  margin-left: 20px;
+  height: 40px;
+}
+.searchBarResultsOpen {
+  border-radius: 5px 0px 0px 5px;
 }
 .searchBarForm {
   width: 100%;
   display: flex;
+  height: 100%;
 }
 .searchInput {
-  border-radius: 50px 0px 0px 50px!important;
+  border-radius: 5px 0px 0px 5px!important;
+  height: 100%;
+  font-size: 12pt;
 }
 .searchButton {
-  border-radius: 0px 50px 50px 0px!important;
+  border-radius: 0px 5px 5px 0px!important;
   position: relative;
-  height: 34px;
+  height: 40px;
   min-width: 100px;
+  font-size: 12pt;
 }
 .searchList {
   padding-left: 0;
-  border-radius: 0 0 3px 3px;
-  max-width: calc(75% - 100px);
+
+  border-radius: 3px;
+  overflow: hidden;
+  max-width: calc(75% - 142px);
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  margin-left: 22px;
+  margin-top: 5px;
+  border: solid 1px lightgrey;
 }
 .searchListItem {
   cursor: pointer;
+  height: 45px;
+  padding-left: 10px;
+  font-size: 10pt;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s ease-in-out;
+}
+.searchListItem:first-child {
+  border-top: none;
+}
+.searchListItem:hover {
+  background: #F2F2F2;
+}
+.searchListItemIcon {
+  margin-right: 10px;
+  width: 30px;
+  text-align: center;
+}
+.searchListItemIcon img {
+  width: 15px;
+}
+.searchListItemTextName {
+  font-weight: bold;
+  margin-
 }
 .searchListItem li {
   transition: background 0.2s ease-in-out;
@@ -80,6 +121,7 @@
 .list-group-item:first-child {
   border-top-left-radius: 0px;
   border-top-right-radius: 0px;
+
 }
 /*
 * List
@@ -248,10 +290,16 @@ li {
 .leaflet-top {
   top: auto!important;
   left: auto!important;
-  bottom: 70px;
-  right: 20px;
-}
+  bottom: 30px;
+  right: 380px;
 
+}
+.leaflet-control-zoom {
+  border-radius: 5px!important;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)!important;
+  overflow: hidden;
+  border: solid 1px lightgrey!important;
+}
 
 /*
 * Create Wigot
@@ -288,3 +336,20 @@ li {
   margin-bottom: 20px;
 }
 
+/*
+* Pin popup
+*/
+.pinPopup .name {
+  margin-bottom: 5px;
+  font-size: 12pt;
+  color: #4A89F3;
+}
+
+.pinPopup .address {
+  margin-bottom: 20px;
+}
+
+.pinPopup button {
+  display: block!important;
+  margin-left: auto!important;
+}

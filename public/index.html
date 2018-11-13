@@ -70,21 +70,25 @@
               </form>
             </div>
             <div v-if='isSearchResultsOpen' class="searchResults">
-                <ul class="searchList">
-                  <li
-                    v-for="item in searchResults"
-                    class="searchListItem list-group-item list-group-item-action"
-                    @click="addPin(item)"
-                  >
-                    <!-- pas d'utilité à mettre un lien ici
-                    a
-                      class="list-group-item list-group-item-action"
-                      @click="addPin(item)"
-                    -->
-                      {{ item.name }} - {{ item.location && item.location.address1 }}, {{ item.location && item.location.zip_code }} {{ item.location && item.location.city }}
-                    <!--/a-->
-                  </li>
-                </ul>
+              <ul class="searchList">
+                <li
+                  v-for="item in searchResults"
+                  class="searchListItem"
+                  @click="addPin(item)"
+                >
+                  <div class="searchListItemIcon">
+                    <img src="./assets/markerIcon.png" alt="">
+                  </div>
+                  <div class="searchListItemText">
+                    <div class="searchListItemTextName">
+                      {{ item.name }}
+                    </div>
+                    <div class="searchListItemTextAddress">
+                      {{ item.location && item.location.address1 }}, {{ item.location && item.location.zip_code }} {{ item.location && item.location.city }}
+                    </div>
+                  </div>
+                </li>
+              </ul>
             </div>
 
             <div
