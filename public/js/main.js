@@ -713,9 +713,6 @@ var vm = new window.Vue({
 
     createPinFromMap(data) {
       this.addPin(data, this.markerInCreation);
-
-      // To close the popup
-      // this.map.closePopup();
     },
 
     cancelPinFromMap() {
@@ -732,27 +729,34 @@ var vm = new window.Vue({
       var lat;
       var lng;
 
+      // On a cliqué sur la carte on se sert du marker créé pour 
+      // créer notre pin dans le state global
       if (markerInCreation) {
         newMarker = markerInCreation;
         lat = newMarker._latlng.lat;
         lng = newMarker._latlng.lng;
+      // sinon on se sert des data fournies par Yelp API
       } else {
         lat = data.coordinates.latitude.toString();
         lng = data.coordinates.longitude.toString();
 
+        // et on crée le marker
         newMarker = new L.marker([lat, lng]).addTo(this.map);      
       }
 
+      // On clear notre this.markerInCreation pour le prochain click
       this.markerInCreation = false;
       
 
       // On ferme la liste mais on garde les résultats
       this.isSearchResultsOpen = false;
 
-      // Ici on sauvegarde une reférence vers le marker pour pouvoir le supprimer plus tard
+      // On sauvegarde une reférence vers le marker pour pouvoir le supprimer plus tard
+      // en utilisant l'id générée par LeafletJS, que l'on sauvegarde ci-dessous
       markers.push(newMarker);
 
       var newPin = {
+        // Sauvegarde l'id
         id: newMarker._leaflet_id,
         score: 0,
         coordinates: {
@@ -761,19 +765,23 @@ var vm = new window.Vue({
         }
       };
 
+      // Data Yelp API 
+      // OU
+      // data fournie par l'utilisateur dans le popup de création de marker
       if (data && data.name) {
         newPin.name = data.name;
       }
-
       if (data && data.location) {
         newPin.address = data.location.address1;
         newPin.city = data.location.city;    
       }
-      if (data && data.address) {
-        newPin.address = data.address;
-      }
       if (data && data.image_url) {
         newPin.image = data.location.image_url
+      }
+
+      // Data fournie par l'utilisateur dans le popup de création de marker
+      if (data && data.address) {
+        newPin.address = data.address;
       }
 
       // Bind new popup content and show it
@@ -783,19 +791,28 @@ var vm = new window.Vue({
       newMarker.on('mouseover', function(e) {
         this.openPopup();
       });
+      /*
       newMarker.on('mouseout', function(e) {
         this.closePopup();
-      })
+      })*/
 
+      // Uniquement si on est pas en train de créer les pins 
+      // après un fetchEvent()
       if (!this.isUpdatingFromDB) {
+        // Ajoute le pin au currentEvent
         this.currentEvent.pins.push(newPin);
+        // Ajoute l'id du pin créé aux pinsCreated
         this.pinsCreated.push(newPin.id);
+        // Recentre la map sur les pins
         this.centerMap();
-
+        // Message de confirmation de création de pin
         this.showPinAddedMessage();
   
+        // Uniquement si on est en mode shared
         if (this.appState === this.appStates.sharing) {
+          // Update l'event dans Firebase
           this.updateEvent();
+          // Update le cookie stocké
           this.updateCookie();
         }      
       }
@@ -815,6 +832,27 @@ var vm = new window.Vue({
         });
 
         this.currentEvent.pins[indexPin].score += 1;
+      }
+
+      this.setBestPin();
+
+      if (this.appState === this.appStates.sharing) {
+        this.updateEvent();
+      }
+    },
+    decreaseScorePin(index, pinId) {
+      if (index !== false) {
+        this.currentEvent.pins[index].score -= 1;       
+      } else if (pinId) {
+        var indexPin;
+
+        this.currentEvent.pins.forEach((pin, index) => {
+          if (pin.id === pinId) {
+            indexPin = index;
+          }
+        });
+
+        this.currentEvent.pins[indexPin].score -= 1;
       }
 
       this.setBestPin();
