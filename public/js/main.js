@@ -61,7 +61,7 @@ var getUsernameComponent = `
   <div class="getUsername">
     <div class="title">Please choose a name to participate:</div>
     <input required id="usernameInput" type="text" />
-    <button class="btn btn-primary" onclick="vm.saveUsername();vm.showWelcomeMessage();">Create event</button>
+    <button class="btn btn-primary" onclick="vm.saveUsername();vm.showWelcomeMessage();">Join event</button>
   </div>
 `
 
@@ -188,7 +188,7 @@ var vm = new window.Vue({
       wigotCreation: 1,
       sharing: 2
     },
-
+    // Par défault on set l'app en mode creation
     appState: 1,
 
     /*
@@ -202,17 +202,17 @@ var vm = new window.Vue({
       bestPin: false
     },
 
-    pinsCreated: 0,
-
-    isCreatingWigot: false,
-
+    // Ici on sauvegarde une référence vers la map
+    // qui nous servira pour toutes les manipulations que l'on aura besoin de faire
     map: false,
 
-    tileLayer: false,
+    // This is the value of the search input it is updated in realtime
+    searchInputValue: '',
 
-    inputPin: '',
-
-    localisation: '',
+    // Ici on va stocker le nombre de pins créés 
+    // et c'est en utilisant cette valeur qu'on va déterminer si
+    // l'utilisateur a déjà créé le nombre de pins auquel il a le droit
+    pinsCreated: 0,
 
     // We'll use this variable to display a discreet modal inviting
     // the user to try and give his location again
@@ -224,28 +224,41 @@ var vm = new window.Vue({
     // Firebase Auth UI
     authUI: false,
 
+    // On stocke les résultats de la recherche ici
     searchResults: false,
-    isSearchResultsOpen: false
 
+    // Ouvre / ferme la liste si true / false
+    isSearchResultsOpen: false,
+
+    // Nous permet de bypasser la limite de pins qd on fetch un event
+    isUpdatingFromDB: false
   },
 
   /*
   * Call this before mount
   */
   beforeMount() {
+    // Parse l'URL actuelle
     this.parseURL();
-
   },
 
   mounted() {
+    // Si lors de parseURL() on a récupéré l'ID de l'évènement
+    // et
+    // s'il n'y avait pas d'utilisateur stocké dans les cookies
+    // on propose à l'utilisateur de choisir son nom dans un modal
     if (this.eventID && !this.currentUser) {
       this.toggleModal(true, getUsernameComponent);
     }
 
+    // On initialise firebase (DB)
     this.initFirebase();
+    // On initialise la map
     this.initMap();
 
 
+    // Utile: quand on clique sur le background semi-opaque derrière le modal
+    // on ferme le modal
     var self = this;
     this.$refs.modalBackground.addEventListener('click', function() {
       self.toggleModal(false);
@@ -254,7 +267,7 @@ var vm = new window.Vue({
 
   methods: {
     /*
-    * 
+    * Recherche Yelp
     */
     searchYelpAPI(searchTerm) {
       // On verrouille le bouton search => disabled classe utile dès que tu veux verrouiller un élément
@@ -282,18 +295,24 @@ var vm = new window.Vue({
         return response.json()
       })
       .then((responseParsed) => {
-        // On crée une array
-        var searchResultsFiltered = [];
+        // Si pas de résultats on ouvre la liste et notre placeholder no result found est affiché
+        if (responseParsed.businesses.length <= 0) {
+          this.searchResults = [];
+          this.isSearchResultsOpen = true;
+        } else {
+          // On crée une array
+          var searchResultsFiltered = [];
 
-        // Et on va boucler de 0 à 4 pour ajouter les 5 premiers éléments dans notre array
-        for (var i = 0; i <= 4; i++) {
-          if (responseParsed.businesses[i]) {
-            searchResultsFiltered.push(Object.assign({}, responseParsed.businesses[i]));
+          // Et on va boucler de 0 à 4 pour ajouter les 5 premiers éléments dans notre array
+          for (var i = 0; i <= 4; i++) {
+            if (responseParsed.businesses[i]) {
+              searchResultsFiltered.push(Object.assign({}, responseParsed.businesses[i]));
+            }
           }
+          
+          this.searchResults = searchResultsFiltered;
+          this.isSearchResultsOpen = true;
         }
-        
-        this.searchResults = searchResultsFiltered;
-        this.isSearchResultsOpen = true;
 
         // On enleve la classe disabledOpacity
         searchButton.classList.remove('disabled');
@@ -303,6 +322,13 @@ var vm = new window.Vue({
       .catch((error) => {
         console.log('ERROR in main.js - searchYelpAPI()', error);
       });
+    },
+    handleChangeSearchInput(event) {
+      console.log(event.target.value)
+      if (event.target.value === '') {
+        this.searchResults = false;
+        this.isSearchResultsOpen = false;
+      }
     },
     /*
     * Determines whether or not to show the landing
@@ -320,7 +346,7 @@ var vm = new window.Vue({
         // Store the ID in the state
         this.eventID = match[1];
         var cookie = this.getCookie(`${SETTINGS.cookieNameFirstPart}${this.eventID}`);
-        
+        console.log(cookie)
         if (cookie && cookie.user) {
           this.currentUser = cookie.user.name;
           this.pinsCreated = cookie.user.pinsCreated;
@@ -466,26 +492,44 @@ var vm = new window.Vue({
 
     updateEventFromDB(event) {
       var self = this;
+      // Set this.isUpdatingFromDB
+      this.isUpdatingFromDB = true;
+
       // Update this.currentEvent
       this.currentEvent = event;
       // Add the pins
       if (event.pins && event.pins.length > 0) {
         event.pins.forEach(function(pin) {
-          self.addPin(pin.coords.lat, pin.coords.long, pin);
-        });        
+          self.addPin(pin);
+        });
       } else {
         this.currentEvent.pins = [];
       }
+      this.isUpdatingFromDB = false;
     },
 
     saveUsername() {
       var username = document.getElementById('usernameInput').value;
+
+      this.currentUser = username;
 
       // Create the cookie
       this.setCookie(
         `${SETTINGS.cookieNameFirstPart}${this.eventID}`,
         { user: {
             name: username,
+            pinsCreated: this.pinsCreated
+          }
+        },
+        100
+      );
+    },
+
+    updateCookie() {
+      this.setCookie(
+        `${SETTINGS.cookieNameFirstPart}${this.eventID}`,
+        { user: {
+            name: this.currentUser,
             pinsCreated: this.pinsCreated
           }
         },
@@ -504,6 +548,7 @@ var vm = new window.Vue({
     /*
     * Authentication part
     */
+    /*
     startAuthentication() {
       var self = this;
       firebase.auth().onAuthStateChanged(function(user) {
@@ -536,7 +581,7 @@ var vm = new window.Vue({
       // The start method will wait until the DOM is loaded.
       authUI.start('#firebaseui-auth-container', uiConfig);
     },
-
+*/
 
 
     /*
@@ -551,13 +596,13 @@ var vm = new window.Vue({
         this.map = L.map('map').setView([48.53, 2.14], 15);
       }
       
-      this.tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', //'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', //'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
       {
-      maxZoom: 19,
-      // id: 'mapbox.streets',
-      // accessToken: 'pk.eyJ1IjoiYmpsYWEiLCJhIjoiY2pubzRmYm1iMGI5czNycTFsYTJpZng5biJ9.hbgbuJ24OKVcx4xELavpoQ',
-      // styles: 'mapbox://styles/bjlaa/cjo7a5k5y1quq2snz10gxwkgu',
-      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
+        maxZoom: 19,
+        // id: 'mapbox.streets',
+        // accessToken: 'pk.eyJ1IjoiYmpsYWEiLCJhIjoiY2pubzRmYm1iMGI5czNycTFsYTJpZng5biJ9.hbgbuJ24OKVcx4xELavpoQ',
+        // styles: 'mapbox://styles/bjlaa/cjo7a5k5y1quq2snz10gxwkgu',
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
       }).addTo(this.map);
 
       // Add the mouse click event listener
@@ -648,7 +693,12 @@ var vm = new window.Vue({
 
       var newMarker = new L.marker([lat, lng], { riseOnHover: true }).addTo(this.map);
 
-      newMarker.bindPopup(pinCreationInfoBoxComponent).openPopup();
+      var popupCreation = new L.popup({
+        closeButton: false
+      })
+      .setContent(pinCreationInfoBoxComponent)
+
+      newMarker.bindPopup(popupCreation).openPopup();
 
       this.markerInCreation = newMarker;
     },
@@ -668,13 +718,13 @@ var vm = new window.Vue({
 
     addPin: function (data, markerInCreation) {
       // Restriction: max 3 pins when creating event
-      if (this.appState === this.appStates.wigotCreation && this.pinsCreated >= 3) {
+      if (this.appState === this.appStates.wigotCreation && this.pinsCreated >= 3 && !this.isUpdatingFromDB) {
         alert('Max pins quota reached!');
         return
       }
-      console.log(this.pinsCreated, this.appState ===  this.appStates.sharing)
+
       // Restriction: max 1 pin when not creating event
-      if (this.appState ===  this.appStates.sharing && this.pinsCreated >= 1) {
+      if (this.appState ===  this.appStates.sharing && this.pinsCreated >= 1 && !this.isUpdatingFromDB) {
         alert('Max pins quota reached!');
         return
       }
@@ -686,8 +736,8 @@ var vm = new window.Vue({
         lat = newMarker._latlng.lat;
         lng = newMarker._latlng.lng;
       } else {
-        lat = data.coordinates.latitude.toString();
-        lng = data.coordinates.longitude.toString();
+        lat = data.coords.lat.toString();
+        lng = data.coords.lng.toString();
 
         newMarker = new L.marker([lat, lng]).addTo(this.map);      
       }
@@ -700,14 +750,6 @@ var vm = new window.Vue({
 
       // Ici on sauvegarde une reférence vers le marker pour pouvoir le supprimer plus tard
       markers.push(newMarker);
-
-      /*
-      newMarker.on('click', function(e) {
-        var popup = L.popup()
-         .setLatLng(e.latlng) 
-         .setContent(pinCreationInfoBoxComponent)
-         .openOn(map);
-      })*/
 
       var newPin = {
         id: newMarker._leaflet_id,
@@ -737,14 +779,15 @@ var vm = new window.Vue({
       var newContent = pinPopup(newPin);
       newMarker.bindPopup(newContent).openPopup();
 
-      this.currentEvent.pins.push(newPin);
-      this.pinsCreated += 1;
-      this.centerMap();
-
-      console.log(this.currentEvent)
-
-      if (this.appState === this.appStates.sharing) {
-        this.updateEvent();
+      if (!this.isUpdatingFromDB) {
+        this.currentEvent.pins.push(newPin);
+        this.pinsCreated += 1;
+        // this.centerMap();
+  
+        if (this.appState === this.appStates.sharing) {
+          this.updateEvent();
+          this.updateCookie();
+        }      
       }
     },
 
@@ -847,7 +890,6 @@ var vm = new window.Vue({
       }
     */
     setCookie(name, value, days) {
-      console.log(name)
       var expires = "";
       if (days) {
         var date = new Date();

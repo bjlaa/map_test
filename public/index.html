@@ -56,8 +56,7 @@
                   ref='searchInput'
                   type="text"
                   class="searchInput form-control"
-                  v-model="inputPin"
-                  ref="modif"
+                  v-model="searchInputValue"
                   placeholder="Search for a location or a venue"
                   @focus="toggleSearchList(true);cancelPinFromMap();"
                 >
@@ -71,7 +70,9 @@
             </div>
             <div v-if='isSearchResultsOpen' class="searchResults">
               <ul class="searchList">
+                <!-- On render seulement si il y a des résultats de recherche -->
                 <li
+                  v-if='searchResults.length > 0'
                   v-for="item in searchResults"
                   class="searchListItem"
                   @click="addPin(item)"
@@ -86,6 +87,15 @@
                     <div class="searchListItemTextAddress">
                       {{ item.location && item.location.address1 }}, {{ item.location && item.location.zip_code }} {{ item.location && item.location.city }}
                     </div>
+                  </div>
+                </li>
+                <!-- Si pas de résultats on render: -->
+                <li
+                  v-if='searchResults.length <= 0'
+                  class="searchListItem"
+                >
+                  <div class="searchListItemText">
+                    No result found
                   </div>
                 </li>
               </ul>
@@ -152,7 +162,7 @@
                     Everything set up? Create your Wigot to start sharing it.
                   </div>
                   <button
-                    @click="createEvent"
+                    @click="toggleCreateEvent"
                     class="createWigotButton"
                   >
                     Create Wigot
