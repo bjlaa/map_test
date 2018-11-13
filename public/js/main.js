@@ -140,6 +140,12 @@ var welcomeComponent = function(eventName) {
   `
 }
 
+var pinAddedComponent = `
+  <div class="pinAdded">
+    Pin added!
+  </div>
+`;
+
 /*
 * FirebaseUI config.
 
@@ -212,7 +218,7 @@ var vm = new window.Vue({
     // Ici on va stocker le nombre de pins créés 
     // et c'est en utilisant cette valeur qu'on va déterminer si
     // l'utilisateur a déjà créé le nombre de pins auquel il a le droit
-    pinsCreated: 0,
+    pinsCreated: [],
 
     // We'll use this variable to display a discreet modal inviting
     // the user to try and give his location again
@@ -266,6 +272,360 @@ var vm = new window.Vue({
   },
 
   methods: {
+    /*
+    * Determines whether or not to show the landing
+    * or to fetch the data
+    */
+    parseURL() {
+      var currentURL = window.location.href;
+
+      var match = currentURL.match(/id=([^&]+)/);
+      var self = this;
+      if (match) {
+        // Switch to share mode: le mec a partagé son event
+        this.appState = this.appStates.sharing;
+
+        // Store the ID in the state
+        this.eventID = match[1];
+        var cookie = this.getCookie(`${SETTINGS.cookieNameFirstPart}${this.eventID}`);
+        console.log(cookie)
+        if (cookie && cookie.user) {
+          this.currentUser = cookie.user.name;
+          this.pinsCreated = cookie.user.pinsCreated;
+        }
+      } else {
+        // If no ID is passed in the URL then we are in create mode
+        // we show the create button: the idea is not to create an entry in the database 
+        // each time a dude visits the app but only after he is sure he wants to create a wigot
+        this.appState = this.appStates.wigotCreation;
+      }
+    },
+
+
+
+
+
+    /*
+    * Firebase part
+    */
+    initFirebase() {
+      // We initialize Firebase
+      var config = {
+        apiKey: "AIzaSyA3t1HqYqWLx62jVb8mc1ZuQ_l1pm6FBxI",
+        authDomain: "wigot-220414.firebaseapp.com",
+        databaseURL: "https://wigot-220414.firebaseio.com",
+        projectId: "wigot-220414",
+        storageBucket: "wigot-220414.appspot.com",
+        messagingSenderId: "1057857701694"
+      };
+      var self = this;
+      firebase.initializeApp(config);
+
+      // Here we create a ref to our Firebase DB and store it in the global state
+      // Now we can access our database!
+      var db = firebase.database();
+      this.db = db;
+
+      if (this.eventID) {
+        this.fetchEvent(this.eventID);
+      }
+
+      // If we enabled authentication in the settings then we show the modal
+      // with all the buttons to login or sign up
+      if (SETTINGS.isAuthEnabled) {
+        this.startAuthentication();
+      } else {
+        // Otherwise we just get the user's location === DEMO/DEV MODE
+        self.getLocation();
+      }
+    },
+
+    // Opens the create event modal
+    toggleCreateEvent() {
+      this.toggleModal(true, createEventComponent);
+    },
+
+    // Gets the values provided in the create event modal
+    // and create the event on our firebase backend
+    createEvent() {
+      var self = this;
+      // Get what we need from the modal
+      var eventName = document.getElementById('createEventNameEvent').value;
+      var eventAuthor = document.getElementById('createEventNameAuthor').value;
+
+      // Set the name from the value
+      this.currentEvent.name = eventName;
+
+      // Generate an id for the event
+      // this is the ID that will be used in the URL bar
+      // and generally to refer to the event
+      var newEventId = this.generateUUID();
+
+      // Save on Firebase
+      this.db.ref('/events/' + newEventId).set(this.currentEvent)
+      .then(() => {
+        console.log('SUCCESS in createEvent: event created.');
+        // Add the id to current event and update the event saved in DB
+        self.currentEvent.id = newEventId;
+        self.updateEvent();
+
+        // We create a cookie that stores useful infos about the current user
+        // his name (for later use) and the ids of the pins he has created
+        // => we'll use these ids to render or not elements of the DOM (i.e.: the delete pin button)
+        self.setCookie(
+          `${SETTINGS.cookieNameFirstPart}${newEventId}`,
+          { user: {
+              name: eventAuthor,
+              pinsCreated: this.pinsCreated
+            }
+          },
+          100
+        );
+
+        // We show the event created modal giving the author of the event the 
+        // URL to share to his friends
+        self.toggleModal(true, eventCreatedComponent(newEventId));
+      })
+      .catch(function(error) {
+        console.error("Error adding document: ", error);
+      });
+    },
+
+    // Generate ID
+    // from: https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
+    generateUUID() { // Public Domain/MIT
+        var d = Date.now();
+        if (typeof performance !== 'undefined' && typeof performance.now === 'function'){
+            d += performance.now(); //use high-precision timer if available
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = (d + Math.random() * 16) % 16 | 0;
+            d = Math.floor(d / 16);
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+    },
+
+    // Fetch event from the DB using the ID provided in the URL
+    // called when the app launches
+    fetchEvent(id) {
+      var self = this;
+      this.db.ref('/events/' + id)
+      // Only one value should be returned
+      .once('value')
+      .then(function(snapshot) {
+        var eventFromDB = snapshot.val();
+
+        console.log('SUCCESS in main.js - fetchEvent(): doc.data() ===', eventFromDB);
+
+        // We update the currentEvent object with our fetched data
+        self.updateEventFromDB(eventFromDB);
+      })
+      .catch(function(error) {
+        console.log('ERROR in main.js - couldn\'t fetch event.', error);
+        // We couldn't retrieve the event (doesn't exist or wrong id)
+        // so we 
+        self.appState = this.appStates.wigotCreation;
+      })
+    },
+
+    // Updates the event saved in our DB
+    updateEvent() {
+      var updates = {};
+
+      updates['/events/' + this.currentEvent.id] = this.currentEvent;
+
+      this.db.ref().update(updates);
+    },
+
+    // Updates the event saved in the global VueJS state
+    // with the data fetched from our backend
+    updateEventFromDB(event) {
+      var self = this;
+      // Set this.isUpdatingFromDB => useful to prevent default behaviours
+      // in addPin()
+      this.isUpdatingFromDB = true;
+
+      // Update this.currentEvent
+      this.currentEvent = event;
+
+      // Add the pins to the map
+      if (event.pins && event.pins.length > 0) {
+        event.pins.forEach(function(pin) {
+          self.addPin(pin);
+        });
+      } else {
+        this.currentEvent.pins = [];
+      }
+
+      // Once all done we set it back to false to
+      // get the default behaviour in addPin()
+      this.isUpdatingFromDB = false;
+    },
+
+
+
+
+
+    /*
+    * Cookies
+    */
+    // from: https://stackoverflow.com/questions/14573223/set-cookie-and-get-cookie-with-javascript
+    // and: https://stackoverflow.com/questions/11344531/pure-javascript-store-object-in-cookie
+    /*
+      Example:
+
+      setCookie('ppkcookie', 'testcookie', 7);
+
+      var x = getCookie('ppkcookie');
+      if (x) {
+        [do something with x]
+      }
+    */
+    setCookie(name, value, days) {
+      var expires = "";
+      if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+      }
+      document.cookie = name + "=" + (JSON.stringify(value) || "")  + expires + "; path=/";
+    },
+
+    getCookie(name) {
+     var result = document.cookie.match(new RegExp(name + '=([^;]+)'));
+     result && (result = JSON.parse(result[1]));
+     return result;
+    },
+
+    eraseCookie(name) {   
+      document.cookie = name+'=; Max-Age=-99999999;';  
+    },
+
+    // Saves the username provided when first visiting an event
+    saveUsername() {
+      var username = document.getElementById('usernameInput').value;
+
+      this.currentUser = username;
+
+      // Create the cookie
+      this.setCookie(
+        `${SETTINGS.cookieNameFirstPart}${this.eventID}`,
+        { user: {
+            name: username,
+            pinsCreated: this.pinsCreated
+          }
+        },
+        100
+      );
+    },
+    // Updates the pinsCreated
+    updateCookie() {
+      this.setCookie(
+        `${SETTINGS.cookieNameFirstPart}${this.eventID}`,
+        { user: {
+            name: this.currentUser,
+            pinsCreated: this.pinsCreated
+          }
+        },
+        100
+      );
+    },
+
+
+
+
+
+
+    /*
+    * Map part
+    */
+    initMap(coords) {
+      // If we have been able to get the coordinates of the user 
+      // we center the map on his location
+      if (coords) {
+        this.map = L.map('map').setView([coords.lat, coords.long], 15);
+      } else {
+        this.map = L.map('map').setView([48.53, 2.14], 15);
+      }
+      
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', //'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
+      {
+        maxZoom: 19,
+        // id: 'mapbox.streets',
+        // accessToken: 'pk.eyJ1IjoiYmpsYWEiLCJhIjoiY2pubzRmYm1iMGI5czNycTFsYTJpZng5biJ9.hbgbuJ24OKVcx4xELavpoQ',
+        // styles: 'mapbox://styles/bjlaa/cjo7a5k5y1quq2snz10gxwkgu',
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
+      }).addTo(this.map);
+
+      // Add the mouse click event listener
+      // Need to pass this inside a function === SCOPE ISSUE
+      // use the trick below: store this in a variable (usually "self")
+      var self = this;
+
+      
+      this.map.on('click', function(e) {
+        // Return if a marker is already in creation
+        if (self.markerInCreation) {
+          self.cancelPinFromMap();
+          self.markerInCreation = false;
+        }
+        // Get the coordinates from Leaflet
+        var latlng = self.map.mouseEventToLatLng(e.originalEvent);
+
+        self.saveMarkerInCreation({ coordinates: { latitude: latlng.lat, longitude: latlng.lng  } });
+      });
+    },
+
+    // Get current position - called by body.onload
+    getLocation() {
+      var self = this;
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          // success callback: the user has accepted to give his location
+          function (position) {
+            console.log('SUCCESS in getLocation(): position ===', position);
+
+            // If the map has already been initialized center it on the user's location
+            if (self.map) {
+              self.centerMap({ lat: position.coords.latitude, long: position.coords.longitude });
+            // Else initialize the map
+            } else {
+              self.initMap({ lat: position.coords.latitude, long: position.coords.longitude });
+            }
+          },
+          // error callback: the user refused to give his location
+          function () {
+            // If the map has not already been initialized go ahead and do it
+            if(!self.map) {
+              self.initMap();
+            }
+            self.isMissingLocation = true;
+          },
+        );
+      } else {
+        console.log('ERROR in initApp(): geolocation is not available on this browser.');
+      }
+    },
+
+    centerMap(coords) {
+      // Centers on one point only
+      if (coords) {
+        this.map.setView([coords.lat, coords.long], 15);
+      } else {
+        // Center on several points
+        var arrayOfLatLongsMarkers = [];
+        this.currentEvent.pins.forEach((pin) => {
+          arrayOfLatLongsMarkers.push([pin.coordinates.latitude, pin.coordinates.longitude]);
+        });
+
+        this.map.fitBounds(arrayOfLatLongsMarkers, { maxZoom: 15 });
+      }
+    },
+
+
+
+
+
     /*
     * Recherche Yelp
     */
@@ -323,218 +683,207 @@ var vm = new window.Vue({
         console.log('ERROR in main.js - searchYelpAPI()', error);
       });
     },
-    handleChangeSearchInput(event) {
-      console.log(event.target.value)
-      if (event.target.value === '') {
-        this.searchResults = false;
-        this.isSearchResultsOpen = false;
+
+
+
+
+    /*
+    * Pin: all the method relative to the pins
+    */
+    // Utilisé par la map:
+    // on créé et sauvegarde le pin dans this.markerInCreation
+    saveMarkerInCreation(data) {
+      // Condition nombre pins (3 max ou 1 max selon si en création ou en mode shared)
+      if (this.checkIfOverLimitNumberPins()) return;
+
+      var lat = data.coordinates.latitude.toString();
+      var lng = data.coordinates.longitude.toString();
+
+      var newMarker = new L.marker([lat, lng], { riseOnHover: true }).addTo(this.map);
+
+      var popupCreation = new L.popup({
+        closeButton: false
+      })
+      .setContent(pinCreationInfoBoxComponent)
+
+      newMarker.bindPopup(popupCreation).openPopup();
+
+      this.markerInCreation = newMarker;
+    },
+
+    createPinFromMap(data) {
+      this.addPin(data, this.markerInCreation);
+
+      // To close the popup
+      // this.map.closePopup();
+    },
+
+    cancelPinFromMap() {
+      if (this.markerInCreation) {
+        this.map.removeLayer(this.markerInCreation);
       }
     },
-    /*
-    * Determines whether or not to show the landing
-    * or to fetch the data
-    */
-    parseURL() {
-      var currentURL = window.location.href;
 
-      var match = currentURL.match(/id=([^&]+)/);
-      var self = this;
-      if (match) {
-        // Switch to share mode: le mec a partagé son event
-        this.appState = this.appStates.sharing;
+    addPin: function (data, markerInCreation) {
+      // Condition nombre pins (3 max ou 1 max selon si en création ou en mode shared)
+      if (this.checkIfOverLimitNumberPins()) return;
 
-        // Store the ID in the state
-        this.eventID = match[1];
-        var cookie = this.getCookie(`${SETTINGS.cookieNameFirstPart}${this.eventID}`);
-        console.log(cookie)
-        if (cookie && cookie.user) {
-          this.currentUser = cookie.user.name;
-          this.pinsCreated = cookie.user.pinsCreated;
-        }
+      var newMarker;
+      var lat;
+      var lng;
+
+      if (markerInCreation) {
+        newMarker = markerInCreation;
+        lat = newMarker._latlng.lat;
+        lng = newMarker._latlng.lng;
       } else {
-        // If no ID is passed in the URL then we are in create mode
-        // we show the create button: the idea is not to create an entry in the database 
-        // each time a dude visits the app but only after he is sure he wants to create a wigot
-        this.appState = this.appStates.wigotCreation;
+        lat = data.coordinates.latitude.toString();
+        lng = data.coordinates.longitude.toString();
+
+        newMarker = new L.marker([lat, lng]).addTo(this.map);      
       }
-    },
 
+      this.markerInCreation = false;
+      
 
-    /*
-    * Firebase part
-    */
-    initFirebase() {
-      // We initialize Firebase
-      var config = {
-        apiKey: "AIzaSyA3t1HqYqWLx62jVb8mc1ZuQ_l1pm6FBxI",
-        authDomain: "wigot-220414.firebaseapp.com",
-        databaseURL: "https://wigot-220414.firebaseio.com",
-        projectId: "wigot-220414",
-        storageBucket: "wigot-220414.appspot.com",
-        messagingSenderId: "1057857701694"
+      // On ferme la liste mais on garde les résultats
+      this.isSearchResultsOpen = false;
+
+      // Ici on sauvegarde une reférence vers le marker pour pouvoir le supprimer plus tard
+      markers.push(newMarker);
+
+      var newPin = {
+        id: newMarker._leaflet_id,
+        score: 0,
+        coordinates: {
+          latitude: lat,
+          longitude: lng
+        }
       };
-      var self = this;
-      firebase.initializeApp(config);
 
-      // Here we create a ref to our Firebase DB and store it in the global state
-      // Now we can access our database!
-      var db = firebase.database();
-      this.db = db;
-
-      if (this.eventID) {
-        this.fetchEvent(this.eventID);
+      if (data && data.name) {
+        newPin.name = data.name;
       }
 
-      // If we enabled authentication in the settings then we show the modal
-      // with all the buttons to login or sign up
-      if (SETTINGS.isAuthEnabled) {
-        this.startAuthentication();
-      } else {
-        // Otherwise we just get the user's location === DEMO/DEV MODE
-        self.getLocation();
+      if (data && data.location) {
+        newPin.address = data.location.address1;
+        newPin.city = data.location.city;    
       }
-    },
+      if (data && data.address) {
+        newPin.address = data.address;
+      }
+      if (data && data.image_url) {
+        newPin.image = data.location.image_url
+      }
 
-    /*
-    * Generate ID
-    * from: https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
-    */
-    generateUUID() { // Public Domain/MIT
-        var d = Date.now();
-        if (typeof performance !== 'undefined' && typeof performance.now === 'function'){
-            d += performance.now(); //use high-precision timer if available
-        }
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = (d + Math.random() * 16) % 16 | 0;
-            d = Math.floor(d / 16);
-            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-        });
-    },
+      // Bind new popup content and show it
+      var newContent = pinPopup(newPin);
+      newMarker.bindPopup(newContent).openPopup();
 
-    /*
-    * Creates an event: here we create the id but we don't save it yet on the database
-    */
-    toggleCreateEvent() {
-      this.toggleModal(true, createEventComponent);
-    },
-
-    createEvent() {
-      // Here we add this.currentEvent to the events collection in our database
-      var self = this;
-
-      var eventName = document.getElementById('createEventNameEvent').value;
-      var eventAuthor = document.getElementById('createEventNameAuthor').value;
-
-      this.currentEvent.name = eventName;
-
-      // Create a custom id
-      var newEventId = this.generateUUID();
-
-      // Save on Firebase
-      this.db.ref('/events/' + newEventId).set(this.currentEvent)
-      .then(() => {
-        console.log('SUCCESS in createEvent: event created.');
-        // Add the id to current event and update the event saved in DB
-        self.currentEvent.id = newEventId;
-        self.updateEvent();
-
-        // Create the cookie
-        self.setCookie(
-          `${SETTINGS.cookieNameFirstPart}${newEventId}`,
-          { user: {
-              name: eventAuthor,
-              pinsCreated: this.pinsCreated
-            }
-          },
-          100
-        );
-
-        self.toggleModal(true, eventCreatedComponent(newEventId));
-      })
-      .catch(function(error) {
-        console.error("Error adding document: ", error);
+      newMarker.on('mouseover', function(e) {
+        this.openPopup();
       });
-    },
-
-    /*
-    * Fetch event from the DB using the ID provided in the URL
-    */
-    fetchEvent(id) {
-      var self = this;
-      this.db.ref('/events/' + id)
-      .once('value')
-      .then(function(snapshot) {
-        var eventFromDB = snapshot.val();
-
-        console.log('SUCCESS in main.js - fetchEvent(): doc.data() ===', eventFromDB);
-
-        // We update the currentEvent object with our fetched data
-        self.updateEventFromDB(eventFromDB);
+      newMarker.on('mouseout', function(e) {
+        this.closePopup();
       })
-      .catch(function(error) {
-        console.log('ERROR in main.js - couldn\'t fetch event.', error);
-        // We couldn't retrieve the event (doesn't exist or wrong id)
-        // so we 
-        self.appState = this.appStates.wigotCreation;
-      })
-    },
 
-    /*
-    * Update Event
-    */
-    updateEvent() {
-      var updates = {};
+      if (!this.isUpdatingFromDB) {
+        this.currentEvent.pins.push(newPin);
+        this.pinsCreated.push(newPin.id);
+        this.centerMap();
 
-      updates['/events/' + this.currentEvent.id] = this.currentEvent;
-
-      this.db.ref().update(updates);
-    },
-
-    updateEventFromDB(event) {
-      var self = this;
-      // Set this.isUpdatingFromDB
-      this.isUpdatingFromDB = true;
-
-      // Update this.currentEvent
-      this.currentEvent = event;
-      // Add the pins
-      if (event.pins && event.pins.length > 0) {
-        event.pins.forEach(function(pin) {
-          self.addPin(pin);
-        });
-      } else {
-        this.currentEvent.pins = [];
+        this.showPinAddedMessage();
+  
+        if (this.appState === this.appStates.sharing) {
+          this.updateEvent();
+          this.updateCookie();
+        }      
       }
-      this.isUpdatingFromDB = false;
     },
 
-    saveUsername() {
-      var username = document.getElementById('usernameInput').value;
+    // Vote pour un pin
+    increaseScorePin(index, pinId) {
+      if (index !== false) {
+        this.currentEvent.pins[index].score += 1;       
+      } else if (pinId) {
+        var indexPin;
 
-      this.currentUser = username;
-
-      // Create the cookie
-      this.setCookie(
-        `${SETTINGS.cookieNameFirstPart}${this.eventID}`,
-        { user: {
-            name: username,
-            pinsCreated: this.pinsCreated
+        this.currentEvent.pins.forEach((pin, index) => {
+          if (pin.id === pinId) {
+            indexPin = index;
           }
-        },
-        100
-      );
+        });
+
+        this.currentEvent.pins[indexPin].score += 1;
+      }
+
+      this.setBestPin();
+
+      if (this.appState === this.appStates.sharing) {
+        this.updateEvent();
+      }
     },
 
-    updateCookie() {
-      this.setCookie(
-        `${SETTINGS.cookieNameFirstPart}${this.eventID}`,
-        { user: {
-            name: this.currentUser,
-            pinsCreated: this.pinsCreated
-          }
-        },
-        100
-      );
+    // Delete pin both in global state and on the map
+    deletePin: function (index) {
+      // Delete map Marker
+      this.map.removeLayer(markers[index]);
+
+      // Delete reference id saved in this.pinsCreated
+      var pinToDelete = this.currentEvent.pins[index];
+      var indexToDelete = this.pinsCreated.indexOf(pinToDelete.id);
+      this.pinsCreated.splice(indexToDelete, 1);
+
+      // Delete pin in event object
+      this.currentEvent.pins.splice(index, 1);
+      markers.splice(index, 1);
+
+
+      this.setBestPin();
+
+      if (this.appState === this.appStates.sharing) {
+        this.updateEvent();
+        this.updateCookie();
+      }
+    },
+
+    // Détermine le meilleur pins === celui avec le plus haut score
+    setBestPin() {
+      // Pas de pins créé
+      if (this.currentEvent.pins.length <= 0) {
+        return
+      }
+
+      var pinScores = [];
+
+      this.currentEvent.pins.forEach((pin) => {
+        pinScores.push(pin.score);
+      });
+
+      var indexBestPin = pinScores.indexOf(Math.max(...pinScores));
+
+      this.currentEvent.bestPin = Object.assign({}, this.currentEvent.pins[indexBestPin]);
+      console.log(this.currentEvent.bestPin)
+    },
+
+
+
+
+    /*
+    * Helpers
+    */
+    toggleModal(value, component) {
+      if (value) {
+        this.$refs.modal.innerHTML = component;
+        this.$refs.modalContainer.classList.add('showModal');
+      } else {
+        this.$refs.modal.innerHTML = '';
+        this.$refs.modalContainer.classList.toggle('showModal');
+      }
+    },
+
+    toggleSearchList(value) {
+      this.isSearchResultsOpen = value;
     },
 
     showWelcomeMessage() {
@@ -545,6 +894,29 @@ var vm = new window.Vue({
         self.toggleModal(false);
       }, 2000)
     },
+
+    showPinAddedMessage() {
+      this.toggleModal(true, pinAddedComponent);
+
+      var self = this;
+      setTimeout(() => {
+        self.toggleModal(false);
+      }, 2000)
+    },
+
+    checkIfOverLimitNumberPins() {
+      // Restriction: max 3 pins when creating event
+      if (this.appState === this.appStates.wigotCreation && this.pinsCreated.length >= 3 && !this.isUpdatingFromDB) {
+        alert('Max pins quota reached!');
+        return true
+      }
+
+      // Restriction: max 1 pin when not creating event
+      if (this.appState ===  this.appStates.sharing && this.pinsCreated.length >= 1 && !this.isUpdatingFromDB) {
+        alert('Max pins quota reached!');
+        return true
+      } 
+    }
     /*
     * Authentication part
     */
@@ -582,331 +954,5 @@ var vm = new window.Vue({
       authUI.start('#firebaseui-auth-container', uiConfig);
     },
 */
-
-
-    /*
-    * Map part
-    */
-    initMap(coords) {
-      // If we have been able to get the coordinates of the user 
-      // we center the map on his location
-      if (coords) {
-        this.map = L.map('map').setView([coords.lat, coords.long], 15);
-      } else {
-        this.map = L.map('map').setView([48.53, 2.14], 15);
-      }
-      
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', //'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
-      {
-        maxZoom: 19,
-        // id: 'mapbox.streets',
-        // accessToken: 'pk.eyJ1IjoiYmpsYWEiLCJhIjoiY2pubzRmYm1iMGI5czNycTFsYTJpZng5biJ9.hbgbuJ24OKVcx4xELavpoQ',
-        // styles: 'mapbox://styles/bjlaa/cjo7a5k5y1quq2snz10gxwkgu',
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
-      }).addTo(this.map);
-
-      // Add the mouse click event listener
-      // Need to pass this inside a function === SCOPE ISSUE
-      // use the trick below: store this in a variable (usually "self")
-      var self = this;
-
-      
-      this.map.on('click', function(e) {
-        // Return if a marker is already in creation
-        if (self.markerInCreation) {
-          self.cancelPinFromMap();
-          self.markerInCreation = false;
-        }
-        // Get the coordinates from Leaflet
-        var latlng = self.map.mouseEventToLatLng(e.originalEvent);
-
-        self.addPinFromMap({ coordinates: { latitude: latlng.lat, longitude: latlng.lng  } });
-      });
-    },
-
-    // Get current position - called by body.onload
-    getLocation() {
-      var self = this;
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          // success callback: the user has accepted to give his location
-          function (position) {
-            console.log('SUCCESS in getLocation(): position ===', position);
-
-            // If the map has already been initialized center it on the user's location
-            if (self.map) {
-              self.centerMap({ lat: position.coords.latitude, long: position.coords.longitude });
-            // Else initialize the map
-            } else {
-              self.initMap({ lat: position.coords.latitude, long: position.coords.longitude });
-            }
-          },
-          // error callback: the user refused to give his location
-          function () {
-            // If the map has not already been initialized go ahead and do it
-            if(!self.map) {
-              self.initMap();
-            }
-            self.isMissingLocation = true;
-          },
-        );
-      } else {
-        console.log('ERROR in initApp(): geolocation is not available on this browser.');
-      }
-    },
-
-    centerMap(coords) {
-      // Centers on one point only
-      if (coords) {
-        this.map.setView([coords.lat, coords.long], 15);
-      } else {
-        // Center on several points
-        var arrayOfLatLongsMarkers = [];
-        this.currentEvent.pins.forEach((pin) => {
-          arrayOfLatLongsMarkers.push([pin.coords.lat, pin.coords.lng]);
-        });
-
-        this.map.fitBounds(arrayOfLatLongsMarkers);
-      }
-    },
-
-
-
-    /*
-    * Pin: all the method relative to the pins
-    */
-    addPinFromMap(data) {
-      // Restriction: max 3 pins when creating event
-      if (this.appState === this.appStates.wigotCreation && this.pinsCreated >= 3) {
-        alert('Max pins quota reached!');
-        return
-      }
-
-      // Restriction: max 1 pin when not creating event
-      if (this.appState ===  this.appStates.sharing && this.pinsCreated >= 1) {
-        alert('Max pins quota reached!');
-        return
-      }
-
-      var lat = data.coordinates.latitude.toString();
-      var lng = data.coordinates.longitude.toString();
-
-      var newMarker = new L.marker([lat, lng], { riseOnHover: true }).addTo(this.map);
-
-      var popupCreation = new L.popup({
-        closeButton: false
-      })
-      .setContent(pinCreationInfoBoxComponent)
-
-      newMarker.bindPopup(popupCreation).openPopup();
-
-      this.markerInCreation = newMarker;
-    },
-
-    createPinFromMap(data) {
-      this.addPin(data, this.markerInCreation);
-
-      // To close the popup
-      // this.map.closePopup();
-    },
-
-    cancelPinFromMap() {
-      if (this.markerInCreation) {
-        this.map.removeLayer(this.markerInCreation);
-      }
-    },
-
-    addPin: function (data, markerInCreation) {
-      // Restriction: max 3 pins when creating event
-      if (this.appState === this.appStates.wigotCreation && this.pinsCreated >= 3 && !this.isUpdatingFromDB) {
-        alert('Max pins quota reached!');
-        return
-      }
-
-      // Restriction: max 1 pin when not creating event
-      if (this.appState ===  this.appStates.sharing && this.pinsCreated >= 1 && !this.isUpdatingFromDB) {
-        alert('Max pins quota reached!');
-        return
-      }
-      var newMarker;
-      var lat;
-      var lng;
-      if (markerInCreation) {
-        newMarker = markerInCreation;
-        lat = newMarker._latlng.lat;
-        lng = newMarker._latlng.lng;
-      } else {
-        lat = data.coords.lat.toString();
-        lng = data.coords.lng.toString();
-
-        newMarker = new L.marker([lat, lng]).addTo(this.map);      
-      }
-
-      this.markerInCreation = false;
-      
-
-      // On ferme la liste mais on garde les résultats
-      this.isSearchResultsOpen = false;
-
-      // Ici on sauvegarde une reférence vers le marker pour pouvoir le supprimer plus tard
-      markers.push(newMarker);
-
-      var newPin = {
-        id: newMarker._leaflet_id,
-        score: 0,
-        coords: {
-          lat: lat,
-          lng: lng
-        }
-      };
-
-      if (data && data.name) {
-        newPin.name = data.name;
-      }
-
-      if (data && data.location) {
-        newPin.address = data.location.address1;
-        newPin.city = data.location.city;    
-      }
-      if (data && data.address) {
-        newPin.address = data.address;
-      }
-      if (data && data.image_url) {
-        newPin.image = data.location.image_url
-      }
-
-      // Bind new popup content and show it
-      var newContent = pinPopup(newPin);
-      newMarker.bindPopup(newContent).openPopup();
-
-      if (!this.isUpdatingFromDB) {
-        this.currentEvent.pins.push(newPin);
-        this.pinsCreated += 1;
-        // this.centerMap();
-  
-        if (this.appState === this.appStates.sharing) {
-          this.updateEvent();
-          this.updateCookie();
-        }      
-      }
-    },
-
-    /*
-    * Vote pour un pin
-    */
-    increaseScorePin(index, pinId) {
-      if (index !== false) {
-        this.currentEvent.pins[index].score += 1;       
-      } else if (pinId) {
-        var indexPin;
-
-        this.currentEvent.pins.forEach((pin, index) => {
-          if (pin.id === pinId) {
-            indexPin = index;
-          }
-        });
-
-        this.currentEvent.pins[indexPin].score += 1;
-      }
-
-      this.setBestPin();
-
-      if (this.appState === this.appStates.sharing) {
-        this.updateEvent();
-      }
-    },
-
-    /* 
-    * Pour le moment ne supprime pas encore le pin correspondant sur la map
-    */ 
-    deletePin: function (index) {
-      this.map.removeLayer(markers[index]);
-      this.currentEvent.pins.splice(index, 1);
-      markers.splice(index, 1);
-
-      this.setBestPin();
-
-      if (this.appState === this.appStates.sharing) {
-        this.updateEvent();
-      }
-    },
-
-    /*
-    * Détermine le meilleur pins === celui avec le plus haut score
-    */
-    setBestPin() {
-      // Pas de pins créé
-      if (this.currentEvent.pins.length <= 0) {
-        return
-      }
-
-      var pinScores = [];
-
-      this.currentEvent.pins.forEach((pin) => {
-        pinScores.push(pin.score);
-      });
-
-      var indexBestPin = pinScores.indexOf(Math.max(...pinScores));
-
-      this.currentEvent.bestPin = Object.assign({}, this.currentEvent.pins[indexBestPin]);
-      console.log(this.currentEvent.bestPin)
-    },
-
-
-    /*
-    * Modal part
-    */
-    toggleModal(value, component) {
-      if (value) {
-        this.$refs.modal.innerHTML = component;
-        this.$refs.modalContainer.classList.add('showModal');
-      } else {
-        this.$refs.modal.innerHTML = '';
-        this.$refs.modalContainer.classList.toggle('showModal');
-      }
-    },
-
-    /*
-    * Search
-    */
-    toggleSearchList(value) {
-      this.isSearchResultsOpen = value;
-    },
-
-
-    /*
-    * Cookies
-    */
-    // from: https://stackoverflow.com/questions/14573223/set-cookie-and-get-cookie-with-javascript
-    // and: https://stackoverflow.com/questions/11344531/pure-javascript-store-object-in-cookie
-    /*
-      Example:
-
-      setCookie('ppkcookie', 'testcookie', 7);
-
-      var x = getCookie('ppkcookie');
-      if (x) {
-        [do something with x]
-      }
-    */
-    setCookie(name, value, days) {
-      var expires = "";
-      if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days*24*60*60*1000));
-        expires = "; expires=" + date.toUTCString();
-      }
-      document.cookie = name + "=" + (JSON.stringify(value) || "")  + expires + "; path=/";
-    },
-
-    getCookie(name) {
-     var result = document.cookie.match(new RegExp(name + '=([^;]+)'));
-     result && (result = JSON.parse(result[1]));
-     return result;
-    },
-
-    eraseCookie(name) {   
-      document.cookie = name+'=; Max-Age=-99999999;';  
-    }
   }
 });

@@ -264,7 +264,7 @@ li {
 .modalContainer .background {
   height: 100vh;
   width: 100vw;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.6);
 }
 
 .modalWigot {
@@ -352,4 +352,14 @@ li {
 .pinPopup button {
   display: block!important;
   margin-left: auto!important;
+}
+
+
+/*
+* Pin Added
+*/
+.pinAdded {
+  font-size: 20pt;
+  padding: 40px;
+  color: #4A89F3;
 }
