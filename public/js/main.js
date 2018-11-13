@@ -122,6 +122,9 @@ var pinPopup = function(pin) {
       <div class="address">
         ${pin.address}
       </div>
+      <div class="image">
+        <img src="${pin.image}" alt="" />
+      </div>
       <button
         class="btn btn-primary"
         onclick="vm.increaseScorePin(false, ${pin.id})"
@@ -776,9 +779,8 @@ var vm = new window.Vue({
         newPin.city = data.location.city;    
       }
       if (data && data.image_url) {
-        newPin.image = data.location.image_url
+        newPin.image = data.image_url
       }
-
       // Data fournie par l'utilisateur dans le popup de création de marker
       if (data && data.address) {
         newPin.address = data.address;
