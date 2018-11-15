@@ -162,13 +162,97 @@ li {
     text-align: center;
     font-weight: bold;
 }
-.sidebar {
+.sideBar {
   position: fixed;
   top: 20px;
   right: 20px;
   width: calc(25% - 20px);
-  padding: 15px 10px;
+  padding: 15px 0px;
   height: calc(100vh - 40px);
+  background: #FAFAFA;
+}
+
+.sideBarLogo {
+  position: relative;
+  width: 100%;
+}
+.sideBarLogoImage {
+  max-width: 150px;
+}
+.sideBarHeader {
+  padding: 10px 15px;
+
+}
+.sideBarHeaderTitle {
+  font-size: 20pt;
+  line-height: 0.8;
+  color: #4A89F3;
+}
+.sideBarHeaderAuthor {
+  font-size: 8pt;
+  color: grey;
+}
+.sideBarPinList {
+  background: #FAFAFA;
+  padding: 10px;
+  border-radius: 3px;
+}
+.sideBarPinListItem {
+  display: flex;
+  padding: 10px 5px;
+  border-bottom: solid 1px lightgrey;
+}
+.sideBarPinListItemIcon {
+  width: 25px;
+  margin-right: 10px;
+}
+.sideBarPinListItemName {
+  color:#4A89F3;
+}
+.sideBarPinListItemLikeButton {
+  border: none;
+  color: #4A89F3;
+  background: rgba(0,0,0,0);
+  margin-left: auto;
+}
+.sideBarPinListItemDeleteButton {
+  color: lightgrey;
+  background: rgba(0,0,0,0);
+  border: none;
+  transition: color 0.2s ease-in-out;
+}
+.sideBarPinListItemDeleteButton:hover {
+  color: grey;
+}
+
+.sideBarPinListItemBest {
+  background: #4A89F3;
+  border-radius: 3px;
+  color: white;
+  padding-top: 5px;
+}
+.sideBarPinListItemBestTitle {
+  margin-left: 10px;
+  font-size: 8pt;
+}
+.sideBarPinListItemBest .sideBarPinListItem {
+  border-bottom: none;
+}
+.sideBarPinListItemBest .sideBarPinListItemName {
+  color: white;
+  font-size: 12pt;
+  display: flex;
+  align-items: center;
+}
+.sideBarPinListItemBest .sideBarPinListItemLikeButton {
+  color: white;
+} 
+.sideBarPinListItemBest .sideBarPinListItemIcon {
+  width: 50px;
+  margin-top: -15px;
+}
+.sideBarPinListItemBest .sideBarPinListItemName {
+  font-size: 15pt;
 }
 .card {
   /*
@@ -178,9 +262,8 @@ li {
   */
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
   /*box-shadow: 0rem .5rem 1rem rgba(0,0,0,.3);*/
-  background-color: #fff;
   border-radius: 0.8rem;
-  padding: 2px 16px 2px 16px;
+  /* padding: 2px 16px 2px 16px;*/
 }
 .btn-circle {
   width: 30px;
@@ -209,28 +292,7 @@ li {
     padding: 2px;
 }
 
-/*
-* Logo
-*/
-.logo {
-  position: relative;
-  width: 100%;
-  text-align: center;
-}
-.logoMain {
-  display: flex;
-  color: #337ab7;
-  font-size: 30pt;
-  font-weight: bold;
-  line-height: 1;
-  font-family: monospace;
-  justify-content: center;
-  width: 100%;
-}
-.logoIcon {
-  margin-right: 5px;
-  max-width: 200px;
-}
+
 .LogoPic {
     width: 100%;
     height: 100%;
@@ -304,7 +366,12 @@ li {
 /*
 * Create Wigot
 */
-
+.createWigot {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  padding: 0px 20px;
+}
 .createWigotButton {
   margin: 20px auto;
   display: block;
@@ -313,6 +380,7 @@ li {
   border-radius: 50px;
   background: #4A89F3;
   border: none;
+
 }
 
 /*

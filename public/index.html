@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="./css/loader.css">
 
     <!-- Fontawesome -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
     <!-- LeafletJs -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
 
@@ -44,139 +44,238 @@
         <div ref="modal" id="modalWigot" class="modalWigot">
         </div>
       </div>
-        <div class="primeContainer">
-            <!--La carte est ici</h4-->
-            <div class="searchBar">
-              <!-- On utilise un form ici pour bénéficier du submit quand on appuie sur Entrée en plus du click sur le bouton -->
-              <form
-                class="searchBarForm"
-                v-on:submit.prevent="searchYelpAPI($refs.searchInput.value)"
+      <div class="primeContainer">
+          <!--La carte est ici</h4-->
+          <div class="searchBar">
+            <!-- On utilise un form ici pour bénéficier du submit quand on appuie sur Entrée en plus du click sur le bouton -->
+            <form
+              class="searchBarForm"
+              v-on:submit.prevent="searchYelpAPI($refs.searchInput.value)"
+            >
+              <input
+                ref='searchInput'
+                type="text"
+                class="searchInput form-control"
+                v-model="searchInputValue"
+                placeholder="Search for a location or a venue"
+                @focus="toggleSearchList(true);cancelPinFromMap();"
               >
-                <input
-                  ref='searchInput'
-                  type="text"
-                  class="searchInput form-control"
-                  v-model="searchInputValue"
-                  placeholder="Search for a location or a venue"
-                  @focus="toggleSearchList(true);cancelPinFromMap();"
-                >
-                <button
-                  type="button"
-                  class="searchButton btn btn-primary"
-                  id="searchButton"
-                  @click="searchYelpAPI($refs.searchInput.value)"
-                >Search</button>                    
-              </form>
-            </div>
-            <div v-if='isSearchResultsOpen' class="searchResults">
-              <ul class="searchList">
-                <!-- On render seulement si il y a des résultats de recherche -->
-                <li
-                  v-if='searchResults.length > 0'
-                  v-for="item in searchResults"
-                  class="searchListItem"
-                  @click="addPin(item)"
-                >
-                  <div class="searchListItemIcon">
-                    <img src="./assets/markerIcon.png" alt="">
+              <button
+                type="button"
+                class="searchButton btn btn-primary"
+                id="searchButton"
+                @click="searchYelpAPI($refs.searchInput.value)"
+              >Search</button>                    
+            </form>
+          </div>
+          <div v-if='isSearchResultsOpen' class="searchResults">
+            <ul class="searchList">
+              <!-- On render seulement si il y a des résultats de recherche -->
+              <li
+                v-if='searchResults.length > 0'
+                v-for="item in searchResults"
+                class="searchListItem"
+                @click="addPin(item)"
+              >
+                <div class="searchListItemIcon">
+                  <img src="./assets/markerIcon.png" alt="">
+                </div>
+                <div class="searchListItemText">
+                  <div class="searchListItemTextName">
+                    {{ item.name }}
                   </div>
-                  <div class="searchListItemText">
-                    <div class="searchListItemTextName">
-                      {{ item.name }}
-                    </div>
-                    <div class="searchListItemTextAddress">
-                      {{ item.location && item.location.address1 }}, {{ item.location && item.location.zip_code }} {{ item.location && item.location.city }}
-                    </div>
+                  <div class="searchListItemTextAddress">
+                    {{ item.location && item.location.address1 }}, {{ item.location && item.location.zip_code }} {{ item.location && item.location.city }}
                   </div>
-                </li>
-                <!-- Si pas de résultats on render: -->
-                <li
-                  v-if='searchResults.length <= 0'
-                  class="searchListItem"
-                >
-                  <div class="searchListItemText">
-                    No result found
-                  </div>
-                </li>
-              </ul>
-            </div>
+                </div>
+              </li>
+              <!-- Si pas de résultats on render: -->
+              <li
+                v-if='searchResults.length <= 0'
+                class="searchListItem"
+              >
+                <div class="searchListItemText">
+                  No result found
+                </div>
+              </li>
+            </ul>
+          </div>
 
-            <div
-              ref="map"
-              id='map'
-              class="map"
-              style="height: 800px;"
-            ></div>  
+          <div
+            ref="map"
+            id='map'
+            class="map"
+            style="height: 800px;"
+          ></div>  
+      </div>
+      <aside class="sideBar card">
+        <!--div class="sideBarLogo">
+          <img class="sideBarLogoImage" src="./assets/Wigot_Logo.png">
+        </div-->
+        <div class="sideBarHeader">
+          <div class="sideBarHeaderTitle">
+            Event title
+          </div>
+          <div class="sideBarHeaderAuthor">
+            Created by Author
+          </div>
         </div>
-        <aside class="sidebar card">
-          <div class="logo">
-            <div class="logoMain">
-              <div class="logoIcon">
-              <img class="LogoPic" src="./assets/Wigot_Logo.png">
-              </div>                
+        <div class="sideBarPinList">
+          <!-- S'il y a un best pin on l'affiche -->
+          <div
+            v-if="currentEvent.bestPin"
+            class="sideBarPinListItemBest"
+          >
+            <div class="sideBarPinListItemBestTitle">Tonight we go to:</div>
+            <div
+              
+              class="sideBarPinListItem"
+            >
+              <div class="sideBarPinListItemIcon">
+                <img
+                  class="sideBarPinListItemIconImage"
+                  src="./assets/beers.png"
+                >
+              </div>
+              <div class="sideBarPinListItemName">{{ currentEvent.bestPin.name }}</div>
+              <div class="sideBarPinListItemScore">
+
+              </div>
+              <button
+                @click="increaseScorePin(0)"
+                class="sideBarPinListItemLikeButton"
+              >
+                <i class="fas fa-heart"></i>
+                <span
+                  v-show="currentEvent.pins[0].score > 0"
+                >{{ currentEvent.bestPin.score ? currentEvent.bestPin.score : null}}</span>
+              </button>
+              <button class="sideBarPinListItemDeleteButton">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <!-- S'il y a un best pin on retire le premier pin de la liste à afficher -->
+          <div
+            v-if="currentEvent.pins.length > 0 && currentEvent.bestPin"
+            v-for="(pin, index) in Array.from(currentEvent.pins).splice(1, currentEvent.pins.length - 1)"
+            class="sideBarPinListItem"
+          >
+            <div class="sideBarPinListItemIcon">
+              <img
+                class="sideBarPinListItemIconImage"
+                src="./assets/markerIcon.png"
+              >
+            </div>
+            <div class="sideBarPinListItemName">{{ pin.name }}</div>
+            <button
+              @click="increaseScorePin(index+1)"
+              class="sideBarPinListItemLikeButton"
+            >
+              <i class="fas fa-heart"></i>
+              <span
+                v-show="pin.score > 0"
+              >{{ pin.score ? pin.score : null}}</span>
+            </button>
+            <button class="sideBarPinListItemDeleteButton">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+  
+          <!-- S'il n'y a pas de best pin on affiche la liste normale -->
+          <div
+            v-if="currentEvent.pins.length > 0 && !currentEvent.bestPin"
+            v-for="(pin, index) in Array.from(currentEvent.pins)"
+            class="sideBarPinListItem"
+          >
+            <div class="sideBarPinListItemIcon">
+              <img
+                class="sideBarPinListItemIconImage"
+                src="./assets/markerIcon.png"
+              >
+            </div>
+            <div class="sideBarPinListItemName">{{ pin.name }}</div>
+            <div class="sideBarPinListItemScore">
+
+            </div>
+            <button
+              @click="increaseScorePin(index)"
+              class="sideBarPinListItemLikeButton"
+            >
+              <i class="fas fa-heart"></i>
+              <span
+                v-show="pin.score > 0"
+              >{{ pin.score ? pin.score : null }}</span>
+            </button>
+            <button class="sideBarPinListItemDeleteButton">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        <!--
+        <br>
+        <!-- Titre du Wigot en cours, modifiable par tout le monde (fun) -->
+        <!--div class="wigotTitle"><h3><strong>Titre Wigot</strong></h3></div>
+          <br>
+          <div>
+            <div class="content">
+              <h4 class="content-header">Tonight we go to...</h4>
+            <div class="content-body">
+              <!-- Affichage du meilleur pin en fonction du score. La liste des pins ajoutés est ordonnées en fonction de la valeur score,
+                    la partie ci-dessous affiche donc le premier élément [0] du tableau -->
+              <!--p class="bestLoc">{{ currentEvent.bestPin.name }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.address1 }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.zip_code }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.city }}</p>
+            </div>
             </div>
           </div>
           <br>
-          <!-- Titre du Wigot en cours, modifiable par tout le monde (fun) -->
-          <div class="wigotTitle"><h3><strong>Titre Wigot</strong></h3></div>
-            <br>
-            <div>
-              <div class="content">
-                <h4 class="content-header">Tonight we go to...</h4>
+          
+          <div>
+            <div class="content">
+              <div class="content-header">
+                <h4>Places added</h4>
+              </div>
               <div class="content-body">
-                <!-- Affichage du meilleur pin en fonction du score. La liste des pins ajoutés est ordonnées en fonction de la valeur score,
-                      la partie ci-dessous affiche donc le premier élément [0] du tableau -->
-                <p class="bestLoc">{{ currentEvent.bestPin.name }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.address1 }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.zip_code }} {{ currentEvent.bestPin.location && currentEvent.bestPin.location.city }}</p>
-              </div>
-              </div>
-            </div>
-            <br>
-            
-            <div>
-              <div class="content">
-                <div class="content-header">
-                  <h4>Places added</h4>
-                </div>
-                <div class="content-body">
-                  <table>
-                    <tbody>
-                      <tr v-if="currentEvent.pins.length > 0" v-for="(pin, index) in currentEvent.pins">
+                <table>
+                  <tbody>
+                    <tr v-if="currentEvent.pins.length > 0" v-for="(pin, index) in currentEvent.pins">
 
-                        <td class="iconCell" width=20%><img class="markerIcon" src="./assets/markerIcon.png"></td>    
-                        <td class="pinName" width=50%>{{ pin.name }}</td>
-                        <td class="scorePin" width=10%><span v-show="pin.score > 0" class="badge badge-pill badge-warning">{{ pin.score ? pin.score : null}}</span></td>
-                        <td width=10% class="like"><button type="button" class="likeButton btn btn-default" @click="increaseScorePin(index)"><span class="glyphicon glyphicon-heart" style="color: red"></span></button>
+                      <td class="iconCell" width=20%><img class="markerIcon" src="./assets/markerIcon.png"></td>    
+                      <td class="pinName" width=50%>{{ pin.name }}</td>
+                      <td class="scorePin" width=10%><span v-show="pin.score > 0" class="badge badge-pill badge-warning">{{ pin.score ? pin.score : null}}</span></td>
+                      <td width=10% class="like"><button type="button" class="likeButton btn btn-default" @click="increaseScorePin(index)"><span class="glyphicon glyphicon-heart" style="color: red"></span></button>
 
-                        <!--
-                          Ici le v-if nous permet d'afficher conditionnellement le bouton delete
-                          uniquement si l'id du pin traité fait partie de l'array pinsCreated, les pins créés par 
-                          l'utilisateur
-                        -->
-                        <td v-if="pinsCreated.indexOf(pin.id) > -1" width=10% class="delete"><button type="button" class="deleteButton btn btn-danger" @click="deletePin(index)"><span class="glyphicon glyphicon-trash"></span></button>  
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                  
-              <br>
-                <!--
-                  Create WIGOT button renderer conditionally
-                  if appState is in wigotCreation mode
-                -->
-                <div v-if="appState === appStates.wigotCreation" class="createWigot">
-                  <div class="createWigotText">
-                    Everything set up? Create your Wigot to start sharing it.
-                  </div>
-                  <button
-                    @click="toggleCreateEvent"
-                    class="createWigotButton"
-                  >
-                    Create Wigot
-                  </button>
-                </div>
+                      <!--
+                        Ici le v-if nous permet d'afficher conditionnellement le bouton delete
+                        uniquement si l'id du pin traité fait partie de l'array pinsCreated, les pins créés par 
+                        l'utilisateur
+                      -->
+                      <!--td v-if="pinsCreated.indexOf(pin.id) > -1" width=10% class="delete"><button type="button" class="deleteButton btn btn-danger" @click="deletePin(index)"><span class="glyphicon glyphicon-trash"></span></button>  
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-            </div>
-        </aside>
+                
+            <br-->
+
+              <!--
+                Create WIGOT button renderer conditionally
+                if appState is in wigotCreation mode
+              -->
+        
+            <!--/div>
+          </div-->
+        <div v-if="appState === appStates.wigotCreation" class="createWigot">
+          <div class="createWigotText">
+            Everything set up? Create your Wigot to start sharing it.
+          </div>
+          <button
+            @click="toggleCreateEvent"
+            class="createWigotButton"
+          >
+            Create Wigot
+          </button>
+        </div>
+      </aside>
     </div>
     <script src="https://unpkg.com/vue@2.0.3/dist/vue.js"></script>
     <script type="text/javascript" src="./js/main.js"></script>

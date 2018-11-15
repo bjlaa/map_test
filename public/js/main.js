@@ -639,7 +639,7 @@ var vm = new window.Vue({
       // et on remplace le contenu du bouton par un loader le temps que la requête ait lieu
       searchButton.innerHTML = loaderComponent;
 
-      fetch('https://search-yelp-cjwdirifgu.now.sh/searchYelp'/*`https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?term=${searchTerm}&location=paris`*/, {
+      fetch('https://searchyelp.pixlink.io/searchYelp'/*`https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?term=${searchTerm}&location=paris`*/, {
         method: 'POST',
         /*
         headers: new Headers({
@@ -651,7 +651,7 @@ var vm = new window.Vue({
         mode: "cors",
         body: JSON.stringify({
           term: searchTerm,
-          bearer: 'iCcyWIWqSEQEq56EGlgg_Qa1kK8R_Mpv8910GXr6Y_iKIXsLw1676ecmJDIBDX-_0lTDl9MUzJIGFoYCWzBQYRpfvgrzCb_pusHv65VwnEMRcMWom4AV-ikLvoHYW3Yx'
+          // bearer: 'iCcyWIWqSEQEq56EGlgg_Qa1kK8R_Mpv8910GXr6Y_iKIXsLw1676ecmJDIBDX-_0lTDl9MUzJIGFoYCWzBQYRpfvgrzCb_pusHv65VwnEMRcMWom4AV-ikLvoHYW3Yx'
         })
       })
       .then((response) => {
@@ -793,10 +793,8 @@ var vm = new window.Vue({
       newMarker.on('mouseover', function(e) {
         this.openPopup();
       });
-      /*
-      newMarker.on('mouseout', function(e) {
-        this.closePopup();
-      })*/
+      
+      this.setBestPin();
 
       // Uniquement si on est pas en train de créer les pins 
       // après un fetchEvent()
@@ -808,10 +806,12 @@ var vm = new window.Vue({
         // Recentre la map sur les pins
         this.centerMap();
         // Message de confirmation de création de pin
-        this.showPinAddedMessage();
+        // this.showPinAddedMessage();
+
   
         // Uniquement si on est en mode shared
         if (this.appState === this.appStates.sharing) {
+
           // Update l'event dans Firebase
           this.updateEvent();
           // Update le cookie stocké
@@ -821,48 +821,61 @@ var vm = new window.Vue({
     },
 
     // Vote pour un pin
-    increaseScorePin(index, pinId) {
-      if (index !== false) {
-        this.currentEvent.pins[index].score += 1;       
-      } else if (pinId) {
-        var indexPin;
+    increaseScorePin(index) {
+      this.currentEvent.pins[index].score += 1;       
 
-        this.currentEvent.pins.forEach((pin, index) => {
-          if (pin.id === pinId) {
-            indexPin = index;
-          }
-        });
-
-        this.currentEvent.pins[indexPin].score += 1;
+      if (this.currentEvent.pins.length > 1) {
+        this.setBestPin();
       }
-
-      this.setBestPin();
 
       if (this.appState === this.appStates.sharing) {
         this.updateEvent();
       }
     },
     decreaseScorePin(index, pinId) {
-      if (index !== false) {
-        this.currentEvent.pins[index].score -= 1;       
-      } else if (pinId) {
-        var indexPin;
+      this.currentEvent.pins[index].score -= 1;
 
-        this.currentEvent.pins.forEach((pin, index) => {
-          if (pin.id === pinId) {
-            indexPin = index;
-          }
-        });
-
-        this.currentEvent.pins[indexPin].score -= 1;
+      if (this.currentEvent.pins.length > 1) {
+        this.setBestPin();
       }
-
-      this.setBestPin();
 
       if (this.appState === this.appStates.sharing) {
         this.updateEvent();
       }
     },
+
+    // Détermine le meilleur pins === celui avec le plus haut score
+    setBestPin() {
+      // Pas de pins créé
+      if (this.currentEvent.pins.length <= 0) {
+        return
+      }
+      // On vérifie si le score total n'est pas égal à zéro
+      // si oui pas besoin de set le meilleur pin => on return
+      var isAllScoreZero = 0;
+      this.currentEvent.pins.forEach((pin) => {
+        isAllScoreZero += pin.score
+      });
+      // !isAllScoreZero <=> isAllScoreZero === 0
+      if (!isAllScoreZero) return
+
+
+      var arrayPins = Array.from(this.currentEvent.pins);
+      arrayPins.sort((x, y) => {
+        var score1 = x.score;
+        var score2 = y.score;
+
+        if (score1 > score2) return -1;
+
+        if (score1 < score2) return 1;
+
+        if (score1 == score2) return 0;
+      });
+
+      this.currentEvent.bestPin = Object.assign({}, arrayPins[0]);
+      this.currentEvent.pins = arrayPins;
+    },
+
 
     // Delete pin both in global state and on the map
     deletePin: function (index) {
@@ -887,24 +900,7 @@ var vm = new window.Vue({
       }
     },
 
-    // Détermine le meilleur pins === celui avec le plus haut score
-    setBestPin() {
-      // Pas de pins créé
-      if (this.currentEvent.pins.length <= 0) {
-        return
-      }
 
-      var pinScores = [];
-
-      this.currentEvent.pins.forEach((pin) => {
-        pinScores.push(pin.score);
-      });
-
-      var indexBestPin = pinScores.indexOf(Math.max(...pinScores));
-
-      this.currentEvent.bestPin = Object.assign({}, this.currentEvent.pins[indexBestPin]);
-      console.log(this.currentEvent.bestPin)
-    },
 
 
 
