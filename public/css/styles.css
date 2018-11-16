@@ -201,6 +201,12 @@ li {
   display: flex;
   padding: 10px 5px;
   border-bottom: solid 1px lightgrey;
+  transition: background 0.2s ease-in-out;
+  cursor: pointer;
+}
+.sideBarPinListItem:hover {
+  background: #F2F2F2;
+  border-radius: 3px;
 }
 .sideBarPinListItemIcon {
   width: 25px;
@@ -230,6 +236,13 @@ li {
   border-radius: 3px;
   color: white;
   padding-top: 5px;
+  transition: background 0.2s ease-in-out;
+}
+.sideBarPinListItemBest:hover {
+  background: #1365ef;
+}
+.sideBarPinListItemBest .sideBarPinListItem:hover {
+  background: none;
 }
 .sideBarPinListItemBestTitle {
   margin-left: 10px;

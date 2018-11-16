@@ -211,6 +211,8 @@ var vm = new window.Vue({
       bestPin: false
     },
 
+    markers: [],
+
     // Ici on sauvegarde une référence vers la map
     // qui nous servira pour toutes les manipulations que l'on aura besoin de faire
     map: false,
@@ -756,7 +758,7 @@ var vm = new window.Vue({
 
       // On sauvegarde une reférence vers le marker pour pouvoir le supprimer plus tard
       // en utilisant l'id générée par LeafletJS, que l'on sauvegarde ci-dessous
-      markers.push(newMarker);
+      this.markers.push(newMarker);
 
       var newPin = {
         // Sauvegarde l'id
@@ -889,7 +891,7 @@ var vm = new window.Vue({
 
       // Delete pin in event object
       this.currentEvent.pins.splice(index, 1);
-      markers.splice(index, 1);
+      this.markers.splice(index, 1);
 
 
       this.setBestPin();
@@ -902,7 +904,18 @@ var vm = new window.Vue({
 
 
 
+    selectPin(pinId) {
+      var selectedPin = this.currentEvent.pins.filter(pin => pin.id === pinId)[0];
 
+      if (selectedPin) {
+        this.selectedPin = selectedPin;
+      }
+
+      var selectedMarker = this.markers.filter(marker => marker._leaflet_id === pinId)[0];
+      if (selectedMarker) {
+        selectedMarker.openPopup();
+      }
+    },
 
 
     /*

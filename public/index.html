@@ -125,6 +125,7 @@
           <div
             v-if="currentEvent.bestPin"
             class="sideBarPinListItemBest"
+            @click="selectPin(currentEvent.bestPin.id)"
           >
             <div class="sideBarPinListItemBestTitle">Tonight we go to:</div>
             <div
@@ -160,6 +161,7 @@
             v-if="currentEvent.pins.length > 0 && currentEvent.bestPin"
             v-for="(pin, index) in Array.from(currentEvent.pins).splice(1, currentEvent.pins.length - 1)"
             class="sideBarPinListItem"
+            @click="selectPin(pin.id)"
           >
             <div class="sideBarPinListItemIcon">
               <img
@@ -187,6 +189,7 @@
             v-if="currentEvent.pins.length > 0 && !currentEvent.bestPin"
             v-for="(pin, index) in Array.from(currentEvent.pins)"
             class="sideBarPinListItem"
+            @click="selectPin(pin.id)"
           >
             <div class="sideBarPinListItemIcon">
               <img
