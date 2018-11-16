@@ -175,6 +175,8 @@ li {
 .sideBarLogo {
   position: relative;
   width: 100%;
+  text-align: center;
+  margin-bottom: 20px;
 }
 .sideBarLogoImage {
   max-width: 150px;

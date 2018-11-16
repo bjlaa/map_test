@@ -293,7 +293,7 @@ var vm = new window.Vue({
         // Store the ID in the state
         this.eventID = match[1];
         var cookie = this.getCookie(`${SETTINGS.cookieNameFirstPart}${this.eventID}`);
-        console.log(cookie)
+
         if (cookie && cookie.user) {
           this.currentUser = cookie.user.name;
           this.pinsCreated = cookie.user.pinsCreated;
@@ -674,7 +674,7 @@ var vm = new window.Vue({
               searchResultsFiltered.push(Object.assign({}, responseParsed.businesses[i]));
             }
           }
-          
+          console.log(searchResultsFiltered, searchResultsFiltered[0].review_count, searchResultsFiltered[0].transactions,searchResultsFiltered[0].rating, searchResultsFiltered[0].price, searchResultsFiltered[0].distance, searchResultsFiltered[0].display_phone,);
           this.searchResults = searchResultsFiltered;
           this.isSearchResultsOpen = true;
         }
