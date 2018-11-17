@@ -37,7 +37,7 @@ var loginComponent = `
 `;
 var createEventComponent = `
   <div class="createEvent">
-    <h4>You're a few steps away blabla...</h4>
+    <h4>You re a few steps away blabla...</h4>
     <h5 class="guestList">Set your name:</h5>
     <input required id="createEventNameAuthor" class="searchInput form-control" type="text">
     <h5 class="modalTitle">Name your event:</h5>
@@ -121,6 +121,15 @@ var pinPopup = function(pin) {
       </div>
       <div class="address">
         ${pin.address}
+      </div>
+      <div class="rating">
+        <strong>Rating:</strong> ${pin.rating}
+      </div>
+      <div class="price">
+        <strong>Price:</strong> ${pin.price}
+      </div>
+      <div class="categories">
+        ${pin.categories}
       </div>
       <div class="image">
         <img src="${pin.image}" alt="" />
@@ -786,6 +795,15 @@ var vm = new window.Vue({
       // Data fournie par l'utilisateur dans le popup de création de marker
       if (data && data.address) {
         newPin.address = data.address;
+      }
+      if (data && data.price) {
+        newPin.price = data.price;
+      }
+      if (data && data.rating) {
+        newPin.rating = data.rating;
+      }
+      if (data && data.categories) {
+        newPin.categories = data.categories;
       }
 
       // Bind new popup content and show it
