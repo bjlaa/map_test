@@ -113,7 +113,7 @@ var pinCreationInfoBoxComponent = `
   </div>
 `
 
-var pinPopup = function(pin) {
+var pinPopup = function(pin, index) {
   var pinRating = `
     <div class="rating">
       ${pin.rating} <i class="fas fa-star"></i>
@@ -165,7 +165,7 @@ var pinPopup = function(pin) {
       ${pin.categories ? pinCategories : ''}
       <button
         class="pinPopupCreateButton btn btn-primary"
-        onclick="vm.increaseScorePin(false, ${pin.id})"
+        onclick="vm.increaseScorePin(${index})"
       >
         Vote
       </button>
@@ -837,7 +837,7 @@ var vm = new window.Vue({
       }
 
       // Bind new popup content and show it
-      var newContent = pinPopup(newPin);
+      var newContent = pinPopup(newPin, this.markers.indexOf(newMarker));
       newMarker.bindPopup(newContent).openPopup();
 
       newMarker.on('mouseover', function(e) {
@@ -875,6 +875,7 @@ var vm = new window.Vue({
 
     // Vote pour un pin
     increaseScorePin(index) {
+      console.log('this.currentEvent.pins[index] => index ==',index)
       this.currentEvent.pins[index].score += 1;       
 
       if (this.currentEvent.pins.length > 1) {
