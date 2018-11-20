@@ -423,21 +423,48 @@ li {
 * Pin popup
 */
 .pinPopup .name {
-  margin-bottom: 5px;
   font-size: 12pt;
   color: #4A89F3;
 }
 
 .pinPopup .address {
-  margin-bottom: 20px;
+  margin-bottom: 5px;
 }
 
 .pinPopup button {
   display: block!important;
   margin-left: auto!important;
 }
-
-
+.fa-star {
+  color: #FCEC36!important;
+  text-shadow: 0px 0px 1px rgba(0,0,0,0.6);
+}
+.pinPopup .rating,
+.pinPopup .price {
+  display: inline-block;
+}
+.pinPopup .price {
+  margin-left: 5px;
+}
+.pinPopup .rating,
+.pinPopup .categories {
+  font-size: 8pt;
+}
+.pinPopup .categories {
+  color: grey;
+}
+.pinPopup .image {
+  margin-top: 20px;
+  margin-bottom: 5px;
+}
+.pinPopup .image img {
+  max-height: 100px;
+  margin: 0 auto;
+  display: block;
+}
+.pinPopupCreateButton {
+  margin-top: 20px!important;
+}
 /*
 * Pin Added
 */

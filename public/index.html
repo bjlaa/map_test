@@ -109,13 +109,15 @@
           ></div>  
       </div>
       <aside class="sideBar card">
-
-        <div class="sideBarHeader">
+        <div class="sideBarLogo">
+          <img class="sideBarLogoImage" src="./assets/Wigot_Logo.png">
+        </div>
+        <div v-if="currentEvent.title" class="sideBarHeader">
           <div class="sideBarHeaderTitle">
-            Event title
+            {{ currentEvent.title }}
           </div>
-          <div class="sideBarHeaderAuthor">
-            Created by Author
+          <div v-if="currentEvent.author" class="sideBarHeaderAuthor">
+            Created by {{ currentEvent.author }}
           </div>
         </div>
         <div class="sideBarPinList">
@@ -149,7 +151,10 @@
                   v-show="currentEvent.pins[0].score > 0"
                 >{{ currentEvent.bestPin.score ? currentEvent.bestPin.score : null}}</span>
               </button>
-              <button class="sideBarPinListItemDeleteButton">
+              <button
+                @click="deletePin(index)"
+                class="sideBarPinListItemDeleteButton"
+              >
                 <i class="fas fa-times"></i>
               </button>
             </div>
@@ -177,7 +182,10 @@
                 v-show="pin.score > 0"
               >{{ pin.score ? pin.score : null}}</span>
             </button>
-            <button class="sideBarPinListItemDeleteButton">
+            <button
+              @click="deletePin(index)"
+              class="sideBarPinListItemDeleteButton"
+            >
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -208,7 +216,10 @@
                 v-show="pin.score > 0"
               >{{ pin.score ? pin.score : null }}</span>
             </button>
-            <button class="sideBarPinListItemDeleteButton">
+            <button
+              @click="deletePin(index)"
+              class="sideBarPinListItemDeleteButton"
+            >
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -275,9 +286,7 @@
           >
             Create Wigot
           </button>
-          <div class="sideBarLogo">
-            <img class="sideBarLogoImage" src="./assets/Wigot_Logo.png">
-          </div>
+
         </div>
 
       </aside>

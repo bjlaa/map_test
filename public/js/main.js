@@ -114,28 +114,57 @@ var pinCreationInfoBoxComponent = `
 `
 
 var pinPopup = function(pin) {
+  var pinRating = `
+    <div class="rating">
+      ${pin.rating} <i class="fas fa-star"></i>
+    </div>
+  `
+  var pinPrice = `
+    <div class="price">
+      ${pin.price}
+    </div>
+  `;
+
+  var printCategories = (categories) => {
+    const categoriesNode = categories.map((cat, index) => {
+      if (index === categories.length - 1) {
+        return `
+          <span>${cat.title}</span>
+        `
+      } else {
+        return `
+          <span>${cat.title}</span>
+        `
+      }
+    });
+
+    return categoriesNode;
+  }
+  var pinCategories = `
+    <div class="categories">
+      ${pin.categories ? printCategories(pin.categories) : ''}
+    </div>
+  `;
+  var pinImage = `
+    <div class="image">
+      <img src="${pin.image}" alt="" />
+    </div>
+  `
+
   return `
     <div class="pinPopup">
+      ${pin.image ? pinImage : ''}
       <div class="name">
         ${pin.name}
       </div>
       <div class="address">
         ${pin.address}
       </div>
-      <div class="rating">
-        <strong>Rating:</strong> ${pin.rating}
-      </div>
-      <div class="price">
-        <strong>Price:</strong> ${pin.price}
-      </div>
-      <div class="categories">
-        ${pin.categories}
-      </div>
-      <div class="image">
-        <img src="${pin.image}" alt="" />
-      </div>
+      ${pin.rating ? pinRating : ''}
+      ${pin.price ? pinPrice : ''}
+      ${pin.categories ? pinCategories : ''}
       <button
-        class="btn btn-primary"
+        class="pinPopupCreateButton btn btn-primary"
         onclick="vm.increaseScorePin(false, ${pin.id})"
       >
         Vote
@@ -368,7 +397,8 @@ var vm = new window.Vue({
       var eventAuthor = document.getElementById('createEventNameAuthor').value;
 
       // Set the name from the value
-      this.currentEvent.name = eventName;
+      this.currentEvent.title = eventName;
+      this.currentEvent.author = eventAuthor;
 
       // Generate an id for the event
       // this is the ID that will be used in the URL bar
@@ -553,11 +583,11 @@ var vm = new window.Vue({
     /*
     * Map part
     */
-    initMap(coords) {
+    initMap(coordinates) {
       // If we have been able to get the coordinates of the user 
       // we center the map on his location
-      if (coords) {
-        this.map = L.map('map').setView([coords.lat, coords.long], 15);
+      if (coordinates) {
+        this.map = L.map('map').setView([coordinatess.latitude, coordinatess.longitude], 15);
       } else {
         this.map = L.map('map').setView([48.53, 2.14], 15);
       }
@@ -601,7 +631,7 @@ var vm = new window.Vue({
 
             // If the map has already been initialized center it on the user's location
             if (self.map) {
-              self.centerMap({ lat: position.coords.latitude, long: position.coords.longitude });
+              self.centerMap({ latitude: position.coords.latitude, longitude: position.coords.longitude });
             // Else initialize the map
             } else {
               self.initMap({ lat: position.coords.latitude, long: position.coords.longitude });
@@ -624,14 +654,14 @@ var vm = new window.Vue({
     centerMap(coords) {
       // Centers on one point only
       if (coords) {
-        this.map.setView([coords.lat, coords.long], 15);
+        this.map.setView([coords.latitude, coords.longitude], 15);
       } else {
         // Center on several points
         var arrayOfLatLongsMarkers = [];
         this.currentEvent.pins.forEach((pin) => {
           arrayOfLatLongsMarkers.push([pin.coordinates.latitude, pin.coordinates.longitude]);
         });
-
+        console.log(arrayOfLatLongsMarkers)
         this.map.fitBounds(arrayOfLatLongsMarkers, { maxZoom: 15 });
       }
     },
@@ -683,7 +713,7 @@ var vm = new window.Vue({
               searchResultsFiltered.push(Object.assign({}, responseParsed.businesses[i]));
             }
           }
-          console.log(searchResultsFiltered, searchResultsFiltered[0].review_count, searchResultsFiltered[0].transactions,searchResultsFiltered[0].rating, searchResultsFiltered[0].price, searchResultsFiltered[0].distance, searchResultsFiltered[0].display_phone,);
+
           this.searchResults = searchResultsFiltered;
           this.isSearchResultsOpen = true;
         }
@@ -824,7 +854,10 @@ var vm = new window.Vue({
         // Ajoute l'id du pin créé aux pinsCreated
         this.pinsCreated.push(newPin.id);
         // Recentre la map sur les pins
-        this.centerMap();
+        this.centerMap({
+          latitude: lat,
+          longitude: lng
+        });
         // Message de confirmation de création de pin
         // this.showPinAddedMessage();
 
@@ -900,7 +933,7 @@ var vm = new window.Vue({
     // Delete pin both in global state and on the map
     deletePin: function (index) {
       // Delete map Marker
-      this.map.removeLayer(markers[index]);
+      this.map.removeLayer(this.markers[index]);
 
       // Delete reference id saved in this.pinsCreated
       var pinToDelete = this.currentEvent.pins[index];
