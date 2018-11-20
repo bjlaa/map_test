@@ -50,9 +50,20 @@ var createEventComponent = `
 var eventCreatedComponent = function(id) {
 return `
   <div class="eventCreated">
-    <h4>Damn! your WIGOT is created.</h4>
-    <p>Copy/paste the link below to your friend in order to blabla</p>
-    <p>${SETTINGS.shareURL}${id}</p>
+    <h4>You're good to go!</h4>
+    <p>Now, share your Wigot to your friends and start planning.</p>
+    <div class="inputContainer">
+      <input
+        id="inputEventURL"
+        type="text"
+        value="${SETTINGS.shareURL}${id}"
+      />
+      <button
+        onclick="vm.copyEventURL();"
+        class="buttoninputEventURL"
+        id='buttoninputEventURL'
+      >Copy URL</button>
+    </div>
   </div>
 `  
 }
@@ -127,30 +138,26 @@ var pinPopup = function(pin, index) {
 
   var printCategories = (categories) => {
     const categoriesNode = categories.map((cat, index) => {
-      if (index === categories.length - 1) {
-        return `
-          <span>${cat.title}</span>
-        `
-      } else {
-        return `
-          <span>${cat.title}</span>
-        `
-      }
+      return `
+        <span>${cat.title}</span>
+      `
     });
 
     return categoriesNode;
   }
+
   var pinCategories = `
     <div class="categories">
       ${pin.categories ? printCategories(pin.categories) : ''}
     </div>
   `;
+
   var pinImage = `
     <div class="image">
       <img src="${pin.image}" alt="" />
     </div>
   `
-
+  console.log('pin', pin);
   return `
     <div class="pinPopup">
       ${pin.image ? pinImage : ''}
@@ -280,7 +287,9 @@ var vm = new window.Vue({
     isSearchResultsOpen: false,
 
     // Nous permet de bypasser la limite de pins qd on fetch un event
-    isUpdatingFromDB: false
+    isUpdatingFromDB: false,
+
+    pinsVoted: []
   },
 
   /*
@@ -345,9 +354,6 @@ var vm = new window.Vue({
     },
 
 
-
-
-
     /*
     * Firebase part
     */
@@ -399,6 +405,10 @@ var vm = new window.Vue({
       // Set the name from the value
       this.currentEvent.title = eventName;
       this.currentEvent.author = eventAuthor;
+
+      this.currentEvent.pins.forEach((pin) => {
+        pin.author = eventAuthor;
+      });
 
       // Generate an id for the event
       // this is the ID that will be used in the URL bar
@@ -556,7 +566,8 @@ var vm = new window.Vue({
         `${SETTINGS.cookieNameFirstPart}${this.eventID}`,
         { user: {
             name: username,
-            pinsCreated: this.pinsCreated
+            pinsCreated: this.pinsCreated,
+            pinsVoted: this.pinsVoted
           }
         },
         100
@@ -568,7 +579,8 @@ var vm = new window.Vue({
         `${SETTINGS.cookieNameFirstPart}${this.eventID}`,
         { user: {
             name: this.currentUser,
-            pinsCreated: this.pinsCreated
+            pinsCreated: this.pinsCreated,
+            pinsVoted: this.pinsVoted
           }
         },
         100
@@ -608,6 +620,7 @@ var vm = new window.Vue({
 
       
       this.map.on('click', function(e) {
+
         // Return if a marker is already in creation
         if (self.markerInCreation) {
           self.cancelPinFromMap();
@@ -617,6 +630,10 @@ var vm = new window.Vue({
         var latlng = self.map.mouseEventToLatLng(e.originalEvent);
 
         self.saveMarkerInCreation({ coordinates: { latitude: latlng.lat, longitude: latlng.lng  } });
+      });
+
+      document.getElementById('map').addEventListener('click', () => {
+        self.toggleSearchList(false);
       });
     },
 
@@ -836,6 +853,10 @@ var vm = new window.Vue({
         newPin.categories = data.categories;
       }
 
+      if (this.currentUser) {
+        newPin.author = this.currentUser;
+      }
+
       // Bind new popup content and show it
       var newContent = pinPopup(newPin, this.markers.indexOf(newMarker));
       newMarker.bindPopup(newContent).openPopup();
@@ -875,8 +896,16 @@ var vm = new window.Vue({
 
     // Vote pour un pin
     increaseScorePin(index) {
-      console.log('this.currentEvent.pins[index] => index ==',index)
-      this.currentEvent.pins[index].score += 1;       
+      if (this.pinsVoted.indexOf(this.currentEvent.pins[index].id) > -1) {
+        return;
+      }
+
+      // Update the score
+      this.currentEvent.pins[index].score += 1;
+
+      // Store the id of the pin in order to prevent revoting for the same pin
+      this.pinsVoted.push(this.currentEvent.pins[index].id);
+
 
       if (this.currentEvent.pins.length > 1) {
         this.setBestPin();
@@ -886,8 +915,17 @@ var vm = new window.Vue({
         this.updateEvent();
       }
     },
+
     decreaseScorePin(index, pinId) {
+      if (this.pinsVoted.indexOf(this.currentEvent.pins[index].id) < -1) {
+        return;
+      }
+      // Decrease the score
       this.currentEvent.pins[index].score -= 1;
+
+      // REmove the id
+      const indexToRemove = this.pinsVoted.indexOf(this.currentEvent.pins[index].id);
+      this.pinsVoted.splice(indexToRemove, 1);
 
       if (this.currentEvent.pins.length > 1) {
         this.setBestPin();
@@ -1007,16 +1045,34 @@ var vm = new window.Vue({
 
     checkIfOverLimitNumberPins() {
       // Restriction: max 3 pins when creating event
-      if (this.appState === this.appStates.wigotCreation && this.pinsCreated.length >= 3 && !this.isUpdatingFromDB) {
+      console.log(this.pinsCreated, 'piunssss')
+      if (/*this.appState === this.appStates.wigotCreation && */this.pinsCreated.length >= 3 && !this.isUpdatingFromDB) {
         alert('Max pins quota reached!');
         return true
       }
-
+      /*
       // Restriction: max 1 pin when not creating event
       if (this.appState ===  this.appStates.sharing && this.pinsCreated.length >= 1 && !this.isUpdatingFromDB) {
         alert('Max pins quota reached!');
         return true
-      } 
+      } */
+    },
+
+    /*
+    * Helpers
+    */
+    copyEventURL() {
+      /* Get the text field */
+      var copyText = document.getElementById("inputEventURL");
+
+      /* Select the text field */
+      copyText.select();
+
+      /* Copy the text inside the text field */
+      document.execCommand("copy");
+
+      document.getElementById("buttoninputEventURL").style.background = 'orange';
+      document.getElementById("buttoninputEventURL").innerHTML = 'Wigot ready to be shared'
     }
     /*
     * Authentication part

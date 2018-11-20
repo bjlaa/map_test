@@ -138,9 +138,9 @@
                   src="./assets/beers.png"
                 >
               </div>
-              <div class="sideBarPinListItemName">{{ currentEvent.bestPin.name }}</div>
-              <div class="sideBarPinListItemScore">
-
+              <div class="sideBarNameAuthor">
+                <div class="sideBarPinListItemName">{{ currentEvent.bestPin.name }}</div>
+                <div v-if='currentEvent.bestPin.author' class="sideBarPinListItemAuthor">suggested by {{ currentEvent.bestPin.author }}</div>                
               </div>
               <button
                 @click="increaseScorePin(0)"
@@ -172,7 +172,10 @@
                 src="./assets/markerIcon.png"
               >
             </div>
-            <div class="sideBarPinListItemName">{{ pin.name }}</div>
+            <div class="sideBarNameAuthor">
+              <div class="sideBarPinListItemName">{{ pin.name }}</div>
+              <div v-if='pin.author' class="sideBarPinListItemAuthor">suggested by {{ pin.author }}</div>
+            </div>
             <button
               @click="increaseScorePin(index+1)"
               class="sideBarPinListItemLikeButton"
@@ -203,7 +206,10 @@
                 src="./assets/markerIcon.png"
               >
             </div>
-            <div class="sideBarPinListItemName">{{ pin.name }}</div>
+            <div class="sideBarNameAuthor">
+              <div class="sideBarPinListItemName">{{ pin.name }} </div>
+              <div v-if='pin.author' class="sideBarPinListItemAuthor">suggested by {{ pin.author }}</div>
+            </div>
             <div class="sideBarPinListItemScore">
 
             </div>

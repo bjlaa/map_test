@@ -197,6 +197,7 @@ li {
   font-size: 20pt;
   line-height: 0.8;
   color: #4A89F3;
+  margin-bottom: 5px;
 }
 .sideBarHeaderAuthor {
   font-size: 8pt;
@@ -224,6 +225,10 @@ li {
 }
 .sideBarPinListItemName {
   color:#4A89F3;
+}
+.sideBarPinListItemAuthor {
+  font-size: 8pt;
+  color: grey;
 }
 .sideBarPinListItemLikeButton {
   border: none;
