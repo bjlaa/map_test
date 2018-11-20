@@ -1,10 +1,19 @@
-/*
+
  Codes couleur Crammut
  Green: #69d18b;
  Light Green: #1ffe78;
- Blue: #00e0fc;
+ Blue: #00C5FA;
  Pink: #ff6597;
-*/
+
+ .test 
+ {
+  color: #69d18b;
+  color: #1ffe78;
+  color: #69d18b;
+  color: #69d18b;
+
+ }
+
 /*commentaire*/
 /*
 * General classes
@@ -18,7 +27,10 @@ img,
 svg {
   max-width: 100%;
 }
-
+.btn-primary {
+  background: #00C5FA!important;
+  border: none!important;
+}
 /*
   Classes à réutiliser sur les boutons pour pas répéter trop de code
 */
@@ -26,7 +38,7 @@ svg {
   color: white;
   padding: 10px 15px;
   border-radius: 50px;
-  background: #4A89F3;
+  background: #00C5FA;
   border: none;
 }
 
@@ -34,7 +46,7 @@ svg {
   color: white;
   padding: 10px 15px;
   border-radius: 50px;
-  background: #4A89F3;
+  background: #00C5FA;
   border: none;
 }
 
@@ -80,6 +92,8 @@ svg {
   height: 40px;
   min-width: 100px;
   font-size: 12pt;
+  background: #00C5FA!important;
+  border: none;
 }
 .searchList {
   padding-left: 0;
@@ -196,7 +210,7 @@ li {
 .sideBarHeaderTitle {
   font-size: 20pt;
   line-height: 0.8;
-  color: #4A89F3;
+  color: #444;
   margin-bottom: 5px;
 }
 .sideBarHeaderAuthor {
@@ -224,7 +238,7 @@ li {
   margin-right: 10px;
 }
 .sideBarPinListItemName {
-  color:#4A89F3;
+  color: #444;
 }
 .sideBarPinListItemAuthor {
   font-size: 8pt;
@@ -232,7 +246,7 @@ li {
 }
 .sideBarPinListItemLikeButton {
   border: none;
-  color: #4A89F3;
+  color: #00C5FA;
   background: rgba(0,0,0,0);
   margin-left: auto;
 }
@@ -247,14 +261,14 @@ li {
 }
 
 .sideBarPinListItemBest {
-  background: #4A89F3;
+  background: #69d18b;
   border-radius: 3px;
   color: white;
   padding-top: 5px;
   transition: background 0.2s ease-in-out;
 }
 .sideBarPinListItemBest:hover {
-  background: #1365ef;
+  background: #5ebc7d;
 }
 .sideBarPinListItemBest .sideBarPinListItem:hover {
   background: none;
@@ -406,7 +420,7 @@ li {
   color: white;
   padding: 10px 15px;
   border-radius: 50px;
-  background: #4A89F3;
+  background: #00C5FA;
   border: none;
 
 }
@@ -437,7 +451,7 @@ li {
 */
 .pinPopup .name {
   font-size: 12pt;
-  color: #4A89F3;
+  color: #00C5FA;
 }
 
 .pinPopup .address {
@@ -484,5 +498,5 @@ li {
 .pinAdded {
   font-size: 20pt;
   padding: 40px;
-  color: #4A89F3;
+  color: #00C5FA;
 }

@@ -801,8 +801,18 @@ var vm = new window.Vue({
         lat = data.coordinates.latitude.toString();
         lng = data.coordinates.longitude.toString();
 
+        /*var myIcon = L.icon({
+            iconUrl: './assets/marker-icon.png',
+            iconSize: [38, 95],
+            iconAnchor: [22, 94],
+            popupAnchor: [-3, -76],
+            shadowUrl: 'my-icon-shadow.png',
+            shadowSize: [68, 95],
+            shadowAnchor: [22, 94] 
+        });*/
+
         // et on crée le marker
-        newMarker = new L.marker([lat, lng]).addTo(this.map);      
+        newMarker = new L.marker([lat, lng]/*, { icon: myIcon }*/).addTo(this.map);      
       }
 
       // On clear notre this.markerInCreation pour le prochain click
@@ -861,7 +871,9 @@ var vm = new window.Vue({
       var newContent = pinPopup(newPin, this.markers.indexOf(newMarker));
       newMarker.bindPopup(newContent).openPopup();
 
-      newMarker.on('mouseover', function(e) {
+      var self = this;
+
+      newMarker.on('mouseover', function(e) {        
         this.openPopup();
       });
       
@@ -870,6 +882,7 @@ var vm = new window.Vue({
       // Uniquement si on est pas en train de créer les pins 
       // après un fetchEvent()
       if (!this.isUpdatingFromDB) {
+        newPin.id = newMarker._leaflet_id;
         // Ajoute le pin au currentEvent
         this.currentEvent.pins.push(newPin);
         // Ajoute l'id du pin créé aux pinsCreated
@@ -995,13 +1008,15 @@ var vm = new window.Vue({
 
 
     selectPin(pinId) {
+      console.log(pinId)
       var selectedPin = this.currentEvent.pins.filter(pin => pin.id === pinId)[0];
-
+      console.log(selectedPin)
       if (selectedPin) {
         this.selectedPin = selectedPin;
       }
 
       var selectedMarker = this.markers.filter(marker => marker._leaflet_id === pinId)[0];
+      console.log(this.markers, selectedMarker)
       if (selectedMarker) {
         selectedMarker.openPopup();
       }
