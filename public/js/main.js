@@ -79,6 +79,28 @@ return `
 `  
 }
 
+var shareEventComponent = function(id) {
+return `
+  <div class="eventCreated">
+    <h4>Just one more step!</h4>
+    <p>Share your Wigot URL to your friends to continue planning.</p>
+    <div class="inputContainer">
+      <input
+        class="copyURLInput form-control"
+        id="inputEventURL"
+        type="text"
+        value="${SETTINGS.shareURL}${id}"
+      />
+      <button
+        onclick="vm.copyEventURL();"
+        class="buttoninputEventURL btn-primary"
+        id='buttoninputEventURL'
+      >Copy URL</button>
+    </div>
+  </div>
+`  
+}
+
 var getUsernameComponent = `
   <form
     onsubmit="event.preventDefault();vm.saveUsername();vm.showWelcomeMessage();"
@@ -461,10 +483,16 @@ var vm = new window.Vue({
         // We show the event created modal giving the author of the event the 
         // URL to share to his friends
         self.toggleModal(true, eventCreatedComponent(newEventId));
+
+        this.appState = this.appStates.sharing;
       })
       .catch(function(error) {
         console.error("Error adding document: ", error);
       });
+    },
+
+    toggleShareEventModal(eventId) {
+      this.toggleModal(true, shareEventComponent(eventId))
     },
 
     // Generate ID

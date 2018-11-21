@@ -431,6 +431,8 @@ li {
   bottom: 0px;
   left: 0px;
   padding: 0px 20px;
+  width: 100%;
+  text-align: center;
 }
 .createWigotButton {
   margin: 20px auto;

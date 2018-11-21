@@ -294,6 +294,18 @@
           </button>
 
         </div>
+        <div v-if="appState === appStates.sharing" class="createWigot">
+          <div class="createWigotText">
+            Share this Wigot to your friends / family.
+          </div>
+          <button
+            @click="toggleShareEventModal(currentEvent.id);"
+            class="createWigotButton"
+          >
+            Share Wigot
+          </button>
+
+        </div>
 
       </aside>
     </div>
