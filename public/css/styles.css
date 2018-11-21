@@ -224,6 +224,7 @@ li {
   background: #FAFAFA;
   padding: 10px;
   border-radius: 3px;
+  max-height: calc(100% - 220px);
 }
 .sideBarPinListItem {
   display: flex;
