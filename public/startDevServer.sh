@@ -1,2 +1,2 @@
 #!/bin/sh
-browser-sync start --server --files "./index.html" "css/*"  "js/"
+browser-sync start --server --https --files  "./index.html" "css/*"  "js/"

@@ -68,7 +68,7 @@
               >Search</button>                    
             </form>
           </div>
-          <div v-if='isSearchResultsOpen' class="searchResults">
+          <div v-if="isSearchResultsOpen && searchInputValue !== '' && searchResults" class="searchResults">
             <ul class="searchList">
               <!-- On render seulement si il y a des résultats de recherche -->
               <li

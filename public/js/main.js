@@ -4,7 +4,7 @@
 
 var SETTINGS = {
   isAuthEnabled: false,
-  shareURL: 'http://localhost:3000?id=',
+  shareURL: window.location.origin + '?id=',
   cookieNameFirstPart: 'wigot_event_'
 };
 
@@ -36,15 +36,25 @@ var loginComponent = `
   </div>
 `;
 var createEventComponent = `
-  <div class="createEvent">
-    <h4>You re a few steps away blabla...</h4>
-    <h5 class="guestList">Set your name:</h5>
-    <input required id="createEventNameAuthor" class="searchInput form-control" type="text">
+  <form onsubmit="event.preventDefault();vm.createEvent();" class="createEvent">
+    <h4 class="createEventTitle">Just one more step to create your Wigot...</h4>
+    <h5 class="createEventNameTitle">Set your name:</h5>
+    <input
+      required
+      id="createEventNameAuthor"
+      class="searchInput form-control"
+      type="text"
+    >
     <h5 class="modalTitle">Name your event:</h5>
-    <input required id="createEventNameEvent" class="searchInput form-control" type="text">
-    <button class="btn btn-light" onclick="vm.toggleModal(false)">Close modal</button>
-    <button class="btn btn-primary" onclick="vm.createEvent()">Create event</button>
-  </div>
+    <input
+      required
+      id="createEventNameEvent"
+      class="searchInput form-control"
+      type="text"
+    >
+    <button type="button" class="buttonCancel btn btn-light" onclick="vm.toggleModal(false)">Cancel</button>
+    <button class="buttonCreate btn btn-primary">Create event</button>
+  </form>
 `;
 
 var eventCreatedComponent = function(id) {
@@ -54,13 +64,14 @@ return `
     <p>Now, share your Wigot to your friends and start planning.</p>
     <div class="inputContainer">
       <input
+        class="copyURLInput form-control"
         id="inputEventURL"
         type="text"
         value="${SETTINGS.shareURL}${id}"
       />
       <button
         onclick="vm.copyEventURL();"
-        class="buttoninputEventURL"
+        class="buttoninputEventURL btn-primary"
         id='buttoninputEventURL'
       >Copy URL</button>
     </div>
@@ -69,11 +80,21 @@ return `
 }
 
 var getUsernameComponent = `
-  <div class="getUsername">
+  <form
+    onsubmit="event.preventDefault();vm.saveUsername();vm.showWelcomeMessage();"
+    class="getUsername"
+  >
     <div class="title">Please choose a name to participate:</div>
-    <input required id="usernameInput" type="text" />
-    <button class="btn btn-primary" onclick="vm.saveUsername();vm.showWelcomeMessage();">Join event</button>
-  </div>
+    <input
+      required
+      class="usernameInput form-control"
+      id="usernameInput"
+      type="text"
+    />
+    <button
+      class="btn btn-primary"
+    >Join event</button>
+  </form>
 `
 
 var loaderComponent = `
@@ -157,7 +178,7 @@ var pinPopup = function(pin, index) {
       <img src="${pin.image}" alt="" />
     </div>
   `
-  console.log('pin', pin);
+
   return `
     <div class="pinPopup">
       ${pin.image ? pinImage : ''}
@@ -332,6 +353,7 @@ var vm = new window.Vue({
       var currentURL = window.location.href;
 
       var match = currentURL.match(/id=([^&]+)/);
+
       var self = this;
       if (match) {
         // Switch to share mode: le mec a partagé son event
@@ -504,8 +526,8 @@ var vm = new window.Vue({
 
       // Add the pins to the map
       if (event.pins && event.pins.length > 0) {
-        event.pins.forEach(function(pin) {
-          self.addPin(pin);
+        event.pins.forEach(function(pin, index) {
+          self.addPin(pin, false, index);
         });
       } else {
         this.currentEvent.pins = [];
@@ -782,7 +804,7 @@ var vm = new window.Vue({
       }
     },
 
-    addPin: function (data, markerInCreation) {
+    addPin: function (data, markerInCreation, index) {
       // Condition nombre pins (3 max ou 1 max selon si en création ou en mode shared)
       if (this.checkIfOverLimitNumberPins()) return;
 
@@ -801,18 +823,18 @@ var vm = new window.Vue({
         lat = data.coordinates.latitude.toString();
         lng = data.coordinates.longitude.toString();
 
-        /*var myIcon = L.icon({
-            iconUrl: './assets/marker-icon.png',
-            iconSize: [38, 95],
-            iconAnchor: [22, 94],
+        var myIcon = L.icon({
+            iconUrl: './assets/markerIcon.png',
+            iconSize: [40, 40],
+            iconAnchor: [21, 75],
             popupAnchor: [-3, -76],
-            shadowUrl: 'my-icon-shadow.png',
-            shadowSize: [68, 95],
-            shadowAnchor: [22, 94] 
-        });*/
+            shadowUrl: './assets/marker-shadow.png',
+            shadowSize: [40, 60],
+            shadowAnchor: [15, 94] 
+        });
 
         // et on crée le marker
-        newMarker = new L.marker([lat, lng]/*, { icon: myIcon }*/).addTo(this.map);      
+        newMarker = new L.marker([lat, lng], { icon: myIcon }).addTo(this.map);
       }
 
       // On clear notre this.markerInCreation pour le prochain click
@@ -882,7 +904,6 @@ var vm = new window.Vue({
       // Uniquement si on est pas en train de créer les pins 
       // après un fetchEvent()
       if (!this.isUpdatingFromDB) {
-        newPin.id = newMarker._leaflet_id;
         // Ajoute le pin au currentEvent
         this.currentEvent.pins.push(newPin);
         // Ajoute l'id du pin créé aux pinsCreated
@@ -904,6 +925,8 @@ var vm = new window.Vue({
           // Update le cookie stocké
           this.updateCookie();
         }      
+      } else {
+        this.currentEvent.pins[index].id = newMarker._leaflet_id;
       }
     },
 
@@ -1041,7 +1064,7 @@ var vm = new window.Vue({
     },
 
     showWelcomeMessage() {
-      this.toggleModal(true, welcomeComponent(this.currentEvent.name));
+      this.toggleModal(true, welcomeComponent(this.currentEvent.title));
 
       var self = this;
       setTimeout(() => {

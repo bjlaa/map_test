@@ -28,7 +28,7 @@ svg {
   max-width: 100%;
 }
 .btn-primary {
-  background: #00C5FA!important;
+  background: #00C5FA;
   border: none!important;
 }
 /*
@@ -86,6 +86,10 @@ svg {
   height: 100%;
   font-size: 12pt;
 }
+.form-control:focus {
+  border-color: #00C5FA!important;
+  box-shadow: none!important;
+}
 .searchButton {
   border-radius: 0px 5px 5px 0px!important;
   position: relative;
@@ -131,7 +135,6 @@ svg {
 }
 .searchListItemTextName {
   font-weight: bold;
-  margin-
 }
 .searchListItem li {
   transition: background 0.2s ease-in-out;
@@ -389,6 +392,21 @@ li {
 }
 
 /*
+* Get Username
+*/
+.getUsername .title {
+  font-size: 14pt;
+}
+.getUsername .usernameInput {
+  margin-top: 10px;
+}
+.getUsername button {
+  display: block;
+  margin-top: 20px;
+  margin-left: auto;
+}
+
+/*
 * Leaflet mod
 */
 .leaflet-top {
@@ -425,6 +443,39 @@ li {
 
 }
 
+/*
+* Create event popup
+*/
+.modalWigot #createEventNameEvent {
+  margin-bottom: 30px;
+}
+.modalWigot .createEvent h4 {
+  margin-bottom: 20px;
+}
+.createEvent .buttonCancel,
+.createEvent .buttonCreate {
+  margin-left: auto;
+  display: inline-block;
+}
+/*
+* Event created modal
+*/
+.eventCreated p {
+  margin-bottom: 20px;
+}
+.eventCreated .inputContainer {
+  width: 100%;
+  display: flex;
+}
+.eventCreated .inputContainer input {
+  width: 100%;
+  border-radius: 3px 0px 0px 3px;
+}
+.eventCreated .inputContainer .buttoninputEventURL {
+  border-radius: 0px 3px 3px 0px;
+  max-height: 34px;
+  white-space: nowrap;
+}
 /*
 * PinCreationInfoBox
 */
