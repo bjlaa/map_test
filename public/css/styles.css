@@ -437,7 +437,9 @@ li {
   border-radius: 50px;
   background: #00C5FA;
   border: none;
-
+}
+.createWigotTextAddPin {
+  margin-bottom: 20px;
 }
 
 /*

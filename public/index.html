@@ -282,6 +282,11 @@
         
             <!--/div>
           </div-->
+        <div v-if="appState === appStates.wigotCreation && currentEvent.pins && currentEvent.pins.length === 0" class="createWigot">
+          <div class="createWigotTextAddPin">
+            Add a pin by using the search bar or by clicking on the map.
+          </div>
+        </div>
         <div v-if="appState === appStates.wigotCreation && currentEvent.pins && currentEvent.pins.length > 0" class="createWigot">
           <div class="createWigotText">
             Everything set up? Create your Wigot to start sharing it.
