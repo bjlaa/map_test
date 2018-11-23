@@ -713,8 +713,7 @@ var vm = new window.Vue({
               self.initMap();
             }
             self.isMissingLocation = true;
-          },
-          {timeout: 5000, enableHighAccuracy: false, maximumAge: 75000}
+          }
         );
       } else {
         console.log('ERROR in initApp(): geolocation is not available on this browser.');
@@ -901,11 +900,11 @@ var vm = new window.Vue({
         newPin.city = data.location.city;    
       }
       if (data && data.image_url) {
-        newPin.image = data.image_url
+        newPin.image = data.image_url;
       }
 
       if (data && data.image) {
-        newPin.image = data.image
+        newPin.image = data.image;
       }
       // Data fournie par l'utilisateur dans le popup de création de marker
       if (data && data.address) {
