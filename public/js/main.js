@@ -651,7 +651,7 @@ var vm = new window.Vue({
       if (coordinates) {
         this.map = L.map('map').setView([coordinatess.latitude, coordinatess.longitude], 15);
       } else {
-        this.map = L.map('map').setView([48.53, 2.14], 15);
+        this.map = L.map('map').setView([48.857938768171536, 2.3706436157226567]/*Souzy-en-bryche: [48.53, 2.14]*/, 13);
       }
       
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', //'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
@@ -693,6 +693,7 @@ var vm = new window.Vue({
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
           // success callback: the user has accepted to give his location
+
           function (position) {
             console.log('SUCCESS in getLocation(): position ===', position);
 
@@ -705,13 +706,15 @@ var vm = new window.Vue({
             }
           },
           // error callback: the user refused to give his location
-          function () {
+          function (error) {
+            console.log('ERROR in main.js - getLocation():', error);
             // If the map has not already been initialized go ahead and do it
             if(!self.map) {
               self.initMap();
             }
             self.isMissingLocation = true;
           },
+          {timeout: 5000, enableHighAccuracy: false, maximumAge: 75000}
         );
       } else {
         console.log('ERROR in initApp(): geolocation is not available on this browser.');
@@ -719,6 +722,7 @@ var vm = new window.Vue({
     },
 
     centerMap(coords) {
+      console.log('centering', coords);
       // Centers on one point only
       if (coords) {
         this.map.setView([coords.latitude, coords.longitude], 15);
@@ -728,7 +732,7 @@ var vm = new window.Vue({
         this.currentEvent.pins.forEach((pin) => {
           arrayOfLatLongsMarkers.push([pin.coordinates.latitude, pin.coordinates.longitude]);
         });
-        console.log(arrayOfLatLongsMarkers)
+
         this.map.fitBounds(arrayOfLatLongsMarkers, { maxZoom: 15 });
       }
     },
@@ -899,6 +903,10 @@ var vm = new window.Vue({
       if (data && data.image_url) {
         newPin.image = data.image_url
       }
+
+      if (data && data.image) {
+        newPin.image = data.image
+      }
       // Data fournie par l'utilisateur dans le popup de création de marker
       if (data && data.address) {
         newPin.address = data.address;
@@ -955,6 +963,7 @@ var vm = new window.Vue({
         }      
       } else {
         this.currentEvent.pins[index].id = newMarker._leaflet_id;
+        this.centerMap({ latitude: lat, longitude: lng });
       }
     },
 
