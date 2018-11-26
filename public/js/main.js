@@ -732,7 +732,7 @@ var vm = new window.Vue({
           arrayOfLatLongsMarkers.push([pin.coordinates.latitude, pin.coordinates.longitude]);
         });
 
-        this.map.fitBounds(arrayOfLatLongsMarkers, { maxZoom: 15 });
+        this.map.fitBounds(arrayOfLatLongsMarkers, { maxZoom: 14 });
       }
     },
 
@@ -761,7 +761,7 @@ var vm = new window.Vue({
         },
         mode: "cors",
         body: JSON.stringify({
-          term: searchTerm,
+          term: searchTerm.normalize('NFD').replace(/[\u0300-\u036f]/g, ""),
           // bearer: 'iCcyWIWqSEQEq56EGlgg_Qa1kK8R_Mpv8910GXr6Y_iKIXsLw1676ecmJDIBDX-_0lTDl9MUzJIGFoYCWzBQYRpfvgrzCb_pusHv65VwnEMRcMWom4AV-ikLvoHYW3Yx'
         })
       })
@@ -795,6 +795,13 @@ var vm = new window.Vue({
       })
       .catch((error) => {
         console.log('ERROR in main.js - searchYelpAPI()', error);
+
+        // On enleve la classe disabledOpacity
+        searchButton.classList.remove('disabled');
+        // et on remet notre texte
+        searchButton.innerHTML = 'Search';
+
+        this.isSearchResultsOpen = true;
       });
     },
 
@@ -1067,17 +1074,17 @@ var vm = new window.Vue({
 
 
     selectPin(pinId) {
-      console.log(pinId)
       var selectedPin = this.currentEvent.pins.filter(pin => pin.id === pinId)[0];
-      console.log(selectedPin)
+
       if (selectedPin) {
         this.selectedPin = selectedPin;
       }
 
       var selectedMarker = this.markers.filter(marker => marker._leaflet_id === pinId)[0];
-      console.log(this.markers, selectedMarker)
+
       if (selectedMarker) {
         selectedMarker.openPopup();
+        this.centerMap({ latitude: selectedMarker.coordinates.latitude, longitude: selectedMarker.coordinates.longitude });
       }
     },
 
